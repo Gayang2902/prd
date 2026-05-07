@@ -27,6 +27,7 @@ build/
 node_modules/
 .next/
 out/
+*.tsbuildinfo
 
 # Test / Coverage
 .coverage

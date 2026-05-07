@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from prometheus_fastapi_instrumentator import Instrumentator
 
 from app.api.v1.router import api_router
 from app.api.v1.ws import router as ws_router
@@ -23,6 +24,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.add_middleware(RateLimitMiddleware)
+
+Instrumentator().instrument(app).expose(app, endpoint="/metrics")
 
 app.include_router(api_router)
 app.include_router(ws_router)

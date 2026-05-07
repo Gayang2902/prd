@@ -81,7 +81,7 @@ Sprint 8 (Polish + GA prep) ───── GA
 - [x] **IN-01**: GitHub Actions CI 파이프라인 (lint, test, build) | §C.9 | M | main push 시 그린
 - [ ] **IN-02**: K8s dev 네임스페이스 + 기본 NetworkPolicy | §C.6 | M | dev 클러스터에 backend Pod 배포 성공
 - [ ] **IN-03**: Vault dev 인스턴스 + ExternalSecrets Operator | §C.7 | M | API 키 1건을 Vault → Pod env로 주입 검증
-- [ ] **IN-04**: Temporal dev 클러스터 (또는 매니지드) 셋업 | §C.5 | M | hello-world workflow 1건 동작
+- [x] **IN-04**: Temporal dev 클러스터 (또는 매니지드) 셋업 | §C.5 | M | hello-world workflow 1건 동작
 
 ### Discovery (병행)
 - [ ] **DI-01**: 검수자 3-5명 인터뷰 일정 확보 | S
@@ -118,7 +118,7 @@ Sprint 8 (Polish + GA prep) ───── GA
 ### Infra
 - [ ] **IN-05**: stage 클러스터 셋업 (dev와 동일 구성) | M
 - [ ] **IN-06**: Postgres 매니지드 인스턴스 (dev/stage) | M
-- [ ] **IN-07**: 모니터링 기본 (Prometheus + Grafana, 헬스 메트릭) | §C.8 | M
+- [x] **IN-07**: 모니터링 기본 (Prometheus + Grafana, 헬스 메트릭) | §C.8 | M
 
 ### Discovery
 - [ ] **DI-05**: 인터뷰 결과 → KPI 베이스라인 확정, 잔여 가설 리스트 정리
