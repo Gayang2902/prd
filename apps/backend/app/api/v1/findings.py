@@ -12,7 +12,7 @@ from app.schemas.finding import (
     FindingStatusRead,
     FindingStatusUpdate,
 )
-from app.models.comment import Comment
+from app.services.repositories.comment import CommentRepository
 from app.services.repositories.finding import FindingRepository
 
 router = APIRouter(tags=["findings"])
@@ -20,6 +20,10 @@ router = APIRouter(tags=["findings"])
 
 def _get_repo(session: AsyncSession = Depends(get_session)) -> FindingRepository:
     return FindingRepository(session)
+
+
+def _get_comment_repo(session: AsyncSession = Depends(get_session)) -> CommentRepository:
+    return CommentRepository(session)
 
 
 @router.get("/sessions/{session_id}/findings", response_model=list[FindingRead])
@@ -72,3 +76,30 @@ async def get_finding_timeline(
 ) -> list[FindingStatusRead]:
     history = await repo.get_status_history(finding_id)
     return [FindingStatusRead.model_validate(s) for s in history]
+
+
+@router.get("/findings/{finding_id}/comments", response_model=list[CommentRead])
+async def list_comments(
+    finding_id: uuid.UUID,
+    repo: CommentRepository = Depends(_get_comment_repo),
+) -> list[CommentRead]:
+    comments = await repo.list_by_finding(finding_id)
+    return [CommentRead.model_validate(c) for c in comments]
+
+
+@router.post("/findings/{finding_id}/comments", response_model=CommentRead, status_code=201)
+async def create_comment(
+    finding_id: uuid.UUID,
+    payload: CommentCreate,
+    user: CurrentUser,
+    _role=require_role(Role.REVIEWER),
+    repo: CommentRepository = Depends(_get_comment_repo),
+    db: AsyncSession = Depends(get_session),
+) -> CommentRead:
+    comment = await repo.create(
+        finding_id=finding_id,
+        author_id=user.id,
+        content=payload.content,
+    )
+    await db.commit()
+    return CommentRead.model_validate(comment)

@@ -2,7 +2,7 @@
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { CommentList } from '@/components/comment-list';
 import type { Finding } from '@/lib/api/findings';
 import { useUpdateFindingStatus } from '@/lib/hooks/use-findings';
 import { cn } from '@/lib/utils';
@@ -60,6 +60,7 @@ export function FindingPanel({ findings, selected, onSelect, sessionId }: Props)
               검토 (r)
             </Button>
           </div>
+          <CommentList findingId={selected.id} />
         </div>
       )}
 

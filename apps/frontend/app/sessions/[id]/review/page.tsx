@@ -1,11 +1,13 @@
 'use client';
 
-import { use, useCallback, useEffect, useState } from 'react';
+import { use, useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useFindings } from '@/lib/hooks/use-findings';
 import { useUpdateFindingStatus } from '@/lib/hooks/use-findings';
 import { CodeViewer } from '@/components/code-viewer';
+import { FindingFilter } from '@/components/finding-filter';
 import { FindingPanel } from '@/components/finding-panel';
+import { ReportExportModal } from '@/components/report-export-modal';
 import type { Finding } from '@/lib/api/findings';
 
 export default function ReviewPage({ params }: { params: Promise<{ id: string }> }) {
@@ -14,22 +16,39 @@ export default function ReviewPage({ params }: { params: Promise<{ id: string }>
   const [selected, setSelected] = useState<Finding | null>(null);
   const updateStatus = useUpdateFindingStatus(sessionId);
 
+  const [severityFilter, setSeverityFilter] = useState('all');
+  const [categoryFilter, setCategoryFilter] = useState('all');
+
+  const categories = useMemo(() => {
+    if (!findings) return [];
+    return [...new Set(findings.map((f) => f.category))].sort();
+  }, [findings]);
+
+  const filtered = useMemo(() => {
+    if (!findings) return [];
+    return findings.filter((f) => {
+      if (severityFilter !== 'all' && f.severity !== severityFilter) return false;
+      if (categoryFilter !== 'all' && f.category !== categoryFilter) return false;
+      return true;
+    });
+  }, [findings, severityFilter, categoryFilter]);
+
   useEffect(() => {
-    if (findings?.length && !selected) {
-      setSelected(findings[0]);
+    if (filtered.length && !selected) {
+      setSelected(filtered[0]);
     }
-  }, [findings, selected]);
+  }, [filtered, selected]);
 
   const navigate = useCallback(
     (direction: 1 | -1) => {
-      if (!findings?.length || !selected) return;
-      const idx = findings.findIndex((f) => f.id === selected.id);
+      if (!filtered.length || !selected) return;
+      const idx = filtered.findIndex((f) => f.id === selected.id);
       const next = idx + direction;
-      if (next >= 0 && next < findings.length) {
-        setSelected(findings[next]);
+      if (next >= 0 && next < filtered.length) {
+        setSelected(filtered[next]);
       }
     },
-    [findings, selected],
+    [filtered, selected],
   );
 
   useEffect(() => {
@@ -73,11 +92,21 @@ export default function ReviewPage({ params }: { params: Promise<{ id: string }>
             &larr; 회차 상세
           </Link>
           <span className="text-sm font-medium">
-            검증: {findings?.length ?? 0}건
+            검증: {filtered.length}/{findings?.length ?? 0}건
           </span>
+          <FindingFilter
+            severity={severityFilter}
+            onSeverityChange={setSeverityFilter}
+            category={categoryFilter}
+            onCategoryChange={setCategoryFilter}
+            categories={categories}
+          />
         </div>
-        <div className="text-xs text-muted-foreground">
-          j/k: 이동 | c: 확정 | f: 오탐 | r: 검토
+        <div className="flex items-center gap-3">
+          <ReportExportModal sessionId={sessionId} />
+          <span className="text-xs text-muted-foreground">
+            j/k: 이동 | c: 확정 | f: 오탐 | r: 검토
+          </span>
         </div>
       </header>
 
@@ -87,7 +116,7 @@ export default function ReviewPage({ params }: { params: Promise<{ id: string }>
         </div>
         <div className="w-[42%]">
           <FindingPanel
-            findings={findings ?? []}
+            findings={filtered}
             selected={selected}
             onSelect={setSelected}
             sessionId={sessionId}
