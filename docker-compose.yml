@@ -56,7 +56,7 @@ services:
       POSTGRES_PWD: localdev
       POSTGRES_SEEDS: postgres
     healthcheck:
-      test: ["CMD", "tctl", "--address", "localhost:7233", "cluster", "health"]
+      test: ["CMD-SHELL", "nc -z $(hostname -i) 7233"]
       interval: 10s
       timeout: 5s
       retries: 10
