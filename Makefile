@@ -1,4 +1,4 @@
-.PHONY: setup setup-backend setup-frontend setup-schemas lint lint-backend lint-frontend test test-backend test-frontend build build-frontend dev migrate openapi worker
+.PHONY: setup setup-backend setup-frontend setup-schemas lint lint-backend lint-frontend test test-backend test-frontend build build-frontend dev migrate seed openapi worker
 
 # ──────────────────────────────────────────────
 # Setup
@@ -55,6 +55,9 @@ dev:
 # ──────────────────────────────────────────────
 migrate:
 	cd apps/backend && .venv/bin/alembic upgrade head
+
+seed:
+	cd apps/backend && python scripts/seed.py
 
 # ──────────────────────────────────────────────
 # Temporal worker
