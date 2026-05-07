@@ -1,3 +1,5 @@
+import time
+from decimal import Decimal
 from uuid import UUID
 
 import structlog
@@ -26,6 +28,10 @@ async def clone_repository(env: EnvHandle, scope: CodeScope) -> None:
     )
 
 
+class ResourceLimitExceeded(RuntimeError):
+    pass
+
+
 @activity.defn(name="run_agent")
 async def run_agent(env: EnvHandle, ctx: AnalysisContext) -> AnalysisResult:
     from app.services.agent_registry import get_registry
@@ -38,15 +44,43 @@ async def run_agent(env: EnvHandle, ctx: AnalysisContext) -> AnalysisResult:
     agent = agent_cls()
     await agent.prepare(ctx)
 
+    limits = ctx.limits
+    start_time = time.monotonic()
+    accumulated_tokens = 0
     result: AnalysisResult | None = None
+
     async for event in agent.analyze(ctx):
         if isinstance(event, LogEvent):
-            activity.heartbeat({"progress": event.progress, "tokens_used": event.tokens_used})
+            if event.tokens_used is not None:
+                accumulated_tokens = event.tokens_used
+            activity.heartbeat({
+                "progress": event.progress,
+                "tokens_used": accumulated_tokens,
+            })
+
+            elapsed = time.monotonic() - start_time
+            if elapsed > limits.max_runtime_seconds:
+                await agent.terminate()
+                raise ResourceLimitExceeded(
+                    f"Runtime limit exceeded: {elapsed:.0f}s > {limits.max_runtime_seconds}s"
+                )
+            if accumulated_tokens > limits.max_tokens:
+                await agent.terminate()
+                raise ResourceLimitExceeded(
+                    f"Token limit exceeded: {accumulated_tokens} > {limits.max_tokens}"
+                )
+
         elif isinstance(event, AnalysisResult):
             result = event
 
     if result is None:
         raise RuntimeError("Agent did not produce a result")
+
+    if result.cost_usd > limits.max_cost_usd:
+        activity.logger.warn(
+            "Cost limit exceeded",
+            extra={"cost": result.cost_usd, "limit": limits.max_cost_usd},
+        )
 
     await agent.terminate()
     return result
@@ -55,6 +89,7 @@ async def run_agent(env: EnvHandle, ctx: AnalysisContext) -> AnalysisResult:
 @activity.defn(name="post_process_findings")
 async def post_process_findings(session_id: UUID, result: AnalysisResult) -> int:
     from app.core.database import async_session_factory
+    from app.models.analysis_session import AnalysisSession
     from app.models.finding import Finding, RegressionStatus, Severity
     from app.services.fingerprint import compute_fingerprint
 
@@ -76,9 +111,18 @@ async def post_process_findings(session_id: UUID, result: AnalysisResult) -> int
             )
             session.add(finding)
             count += 1
+
+        analysis = await session.get(AnalysisSession, session_id)
+        if analysis is not None:
+            analysis.token_usage = result.tokens_used
+            analysis.cost = Decimal(str(result.cost_usd))
+
         await session.commit()
 
-    activity.logger.info("Saved findings", extra={"count": count})
+    activity.logger.info(
+        "Saved findings",
+        extra={"count": count, "tokens": result.tokens_used, "cost": result.cost_usd},
+    )
     return count
 
 
