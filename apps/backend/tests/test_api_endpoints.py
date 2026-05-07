@@ -172,6 +172,92 @@ def test_update_project() -> None:
     _cleanup()
 
 
+def test_update_project_not_found() -> None:
+    from app.api.v1.projects import _get_repo
+
+    mock_repo = AsyncMock()
+    mock_repo.get.return_value = None
+    app.dependency_overrides[_get_repo] = lambda: mock_repo
+    _setup_overrides()
+
+    client = TestClient(app, raise_server_exceptions=False)
+    resp = client.patch(f"/api/v1/projects/{uuid.uuid4()}", json={"name": "Nope"})
+    assert resp.status_code == 404
+    _cleanup()
+
+
+def test_create_project() -> None:
+    from app.api.v1.projects import _get_repo
+
+    proj = _mock_project()
+    mock_repo = AsyncMock()
+    mock_repo.create.return_value = proj
+    app.dependency_overrides[_get_repo] = lambda: mock_repo
+
+    mock_user = _mock_user()
+    mock_db, _ = _setup_overrides(mock_user)
+
+    result = MagicMock()
+    result.scalar_one_or_none.return_value = mock_user
+    mock_db.execute = AsyncMock(return_value=result)
+    mock_db.commit = AsyncMock()
+
+    client = TestClient(app, raise_server_exceptions=False)
+    resp = client.post(
+        "/api/v1/projects",
+        json={"name": "New", "gitlab_project_id": "gl-1"},
+    )
+    assert resp.status_code == 201
+    _cleanup()
+
+
+def test_create_project_no_users() -> None:
+    from app.api.v1.projects import _get_repo
+
+    mock_repo = AsyncMock()
+    app.dependency_overrides[_get_repo] = lambda: mock_repo
+
+    mock_db, _ = _setup_overrides()
+
+    result = MagicMock()
+    result.scalar_one_or_none.return_value = None
+    mock_db.execute = AsyncMock(return_value=result)
+
+    client = TestClient(app, raise_server_exceptions=False)
+    resp = client.post(
+        "/api/v1/projects",
+        json={"name": "New", "gitlab_project_id": "gl-1"},
+    )
+    assert resp.status_code == 400
+    _cleanup()
+
+
+def test_regression_history() -> None:
+    mock_db, _ = _setup_overrides()
+
+    mock_sessions_result = MagicMock()
+    session = _mock_session(state=SessionState.COMPLETED)
+    mock_sessions_result.scalars.return_value.all.return_value = [session]
+
+    mock_counts_result = MagicMock()
+    mock_counts_result.all.return_value = [
+        (RegressionStatus.NEW, 3),
+        (RegressionStatus.RECURRING, 1),
+    ]
+
+    mock_db.execute = AsyncMock(side_effect=[mock_sessions_result, mock_counts_result])
+
+    client = TestClient(app, raise_server_exceptions=False)
+    resp = client.get(f"/api/v1/projects/{uuid.uuid4()}/regression-history")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert len(data) == 1
+    assert data[0]["new"] == 3
+    assert data[0]["recurring"] == 1
+    assert data[0]["total"] == 4
+    _cleanup()
+
+
 # ── Presets ──
 
 
