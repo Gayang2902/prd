@@ -63,7 +63,7 @@ seed:
 # Temporal worker
 # ──────────────────────────────────────────────
 worker:
-	cd apps/worker && python -m worker
+	cd apps && python -m worker
 
 # ──────────────────────────────────────────────
 # OpenAPI → Frontend types
