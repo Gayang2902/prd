@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
 import { usePresets, useDeletePreset } from '@/lib/hooks/use-presets';
 import { Badge } from '@/components/ui/badge';

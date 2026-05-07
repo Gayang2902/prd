@@ -1,7 +1,7 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { fetchFindings, updateFindingStatus, type Finding } from '../api/findings';
+import { fetchFindings, updateFindingStatus } from '../api/findings';
 
 export function useFindings(sessionId: string, params?: { severity?: string }) {
   return useQuery({

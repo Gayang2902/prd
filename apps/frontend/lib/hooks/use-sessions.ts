@@ -6,7 +6,6 @@ import {
   createSession,
   fetchSession,
   fetchSessions,
-  type Session,
   type SessionCreate,
 } from '../api/sessions';
 
