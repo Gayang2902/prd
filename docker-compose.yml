@@ -55,6 +55,12 @@ services:
       POSTGRES_USER: securescope
       POSTGRES_PWD: localdev
       POSTGRES_SEEDS: postgres
+    healthcheck:
+      test: ["CMD", "tctl", "--address", "localhost:7233", "cluster", "health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
     depends_on:
       postgres:
         condition: service_healthy
