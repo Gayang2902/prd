@@ -225,7 +225,7 @@ Sprint 8 (Polish + GA prep) ───── GA
 - [x] **FE-21**: 필터 바 (심각도, 카테고리, 상태) | F4-1 | M
 
 ### Infra
-- [ ] **IN-15**: WebSocket sticky session 또는 sub/pub 백엔드 (Redis) | §C.5 | M
+- [x] **IN-15**: WebSocket sticky session 또는 sub/pub 백엔드 (Redis) | §C.5 | M
 - [ ] **IN-16**: PDF 생성 인프라 (headless Chromium 또는 wkhtmltopdf) | §B.3 | M
 
 ### Acceptance demo (**MVP-β**, 알파 유저 투입)
