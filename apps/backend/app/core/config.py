@@ -7,8 +7,8 @@ class Settings(BaseSettings):
     app_name: str = "SecureScope"
     debug: bool = False
 
-    database_url: str = "postgresql+asyncpg://securescope:localdev@localhost:5432/securescope"
-    redis_url: str = "redis://localhost:6379/0"
+    database_url: str = "postgresql+asyncpg://securescope:localdev@localhost:15432/securescope"
+    redis_url: str = "redis://localhost:16379/0"
     temporal_host: str = "localhost:7233"
 
     cors_origins: list[str] = ["http://localhost:3000", "http://localhost:3001"]
