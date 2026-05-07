@@ -1,5 +1,6 @@
 from datetime import UTC, date, datetime
 from decimal import Decimal
+from typing import Any
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -12,7 +13,7 @@ async def cost_summary(
     *,
     since: date | None = None,
     until: date | None = None,
-) -> dict:
+) -> dict[str, Any]:
     stmt = select(
         func.count(AnalysisSession.id).label("total_sessions"),
         func.coalesce(func.sum(AnalysisSession.token_usage), 0).label("total_tokens"),
@@ -41,7 +42,7 @@ async def cost_by_project(
     *,
     since: date | None = None,
     until: date | None = None,
-) -> list[dict]:
+) -> list[dict[str, Any]]:
     stmt = (
         select(
             AnalysisSession.project_id,
@@ -80,7 +81,7 @@ async def cost_by_agent(
     *,
     since: date | None = None,
     until: date | None = None,
-) -> list[dict]:
+) -> list[dict[str, Any]]:
     stmt = (
         select(
             AnalysisSession.model_version,
@@ -119,7 +120,7 @@ async def cost_daily(
     *,
     since: date | None = None,
     until: date | None = None,
-) -> list[dict]:
+) -> list[dict[str, Any]]:
     day_col = func.date(AnalysisSession.started_at).label("day")
     stmt = (
         select(

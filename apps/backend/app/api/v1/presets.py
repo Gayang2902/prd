@@ -1,4 +1,5 @@
 import uuid
+from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -39,7 +40,7 @@ async def get_preset(
 async def create_preset(
     payload: PresetCreate,
     user: CurrentUser,
-    _role=require_role(Role.LEAD),
+    _role: Any = require_role(Role.LEAD),
     repo: PresetRepository = Depends(_get_repo),
     db: AsyncSession = Depends(get_session),
 ) -> PresetRead:
@@ -53,7 +54,7 @@ async def update_preset(
     preset_id: uuid.UUID,
     payload: PresetUpdate,
     user: CurrentUser,
-    _role=require_role(Role.LEAD),
+    _role: Any = require_role(Role.LEAD),
     repo: PresetRepository = Depends(_get_repo),
     db: AsyncSession = Depends(get_session),
 ) -> PresetRead:
@@ -69,7 +70,7 @@ async def update_preset(
 async def delete_preset(
     preset_id: uuid.UUID,
     user: CurrentUser,
-    _role=require_role(Role.ADMIN),
+    _role: Any = require_role(Role.ADMIN),
     repo: PresetRepository = Depends(_get_repo),
     db: AsyncSession = Depends(get_session),
 ) -> None:

@@ -1,5 +1,5 @@
 import uuid
-from typing import Annotated
+from typing import Annotated, Any
 
 from fastapi import Depends, Header, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -33,7 +33,7 @@ ROLE_HIERARCHY: dict[Role, int] = {
 }
 
 
-def require_role(minimum: Role):
+def require_role(minimum: Role) -> Any:
     """최소 역할 검사 데코레이터. 역할 계층: VIEWER < REVIEWER < LEAD < ADMIN."""
 
     async def _check(user: CurrentUser) -> User:

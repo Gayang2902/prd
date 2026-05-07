@@ -8,14 +8,15 @@ import time
 from collections import defaultdict
 
 from fastapi import Request, status
-from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.responses import JSONResponse
+from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
+from starlette.responses import JSONResponse, Response
+from starlette.types import ASGIApp
 
 DEFAULT_REQUESTS_PER_MINUTE = 120
 
 
 class RateLimitMiddleware(BaseHTTPMiddleware):
-    def __init__(self, app, requests_per_minute: int = DEFAULT_REQUESTS_PER_MINUTE):
+    def __init__(self, app: ASGIApp, requests_per_minute: int = DEFAULT_REQUESTS_PER_MINUTE):
         super().__init__(app)
         self.rpm = requests_per_minute
         self.window = 60.0
@@ -27,7 +28,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             return f"user:{user_id}"
         return f"ip:{request.client.host if request.client else 'unknown'}"
 
-    async def dispatch(self, request: Request, call_next):
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         key = self._client_key(request)
         now = time.monotonic()
         cutoff = now - self.window

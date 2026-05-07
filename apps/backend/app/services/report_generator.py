@@ -11,6 +11,7 @@ from datetime import datetime
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models.finding import Finding
 from app.services.repositories.finding import FindingRepository
 
 
@@ -33,7 +34,7 @@ async def generate_report(
     return _to_json(findings), "application/json", f"report_{sid_short}_{ts}.json"
 
 
-def _to_markdown(findings, session_id) -> str:
+def _to_markdown(findings: list[Finding], session_id: uuid.UUID) -> str:
     lines = [
         "# SecureScope 분석 리포트",
         "",
@@ -67,7 +68,7 @@ def _to_markdown(findings, session_id) -> str:
     return "\n".join(lines)
 
 
-def _to_csv(findings) -> str:
+def _to_csv(findings: list[Finding]) -> str:
     output = io.StringIO()
     writer = csv.writer(output)
     writer.writerow(
@@ -98,7 +99,7 @@ def _to_csv(findings) -> str:
     return output.getvalue()
 
 
-def _to_json(findings) -> str:
+def _to_json(findings: list[Finding]) -> str:
     data = [
         {
             "id": str(f.id),

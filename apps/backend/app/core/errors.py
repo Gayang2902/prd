@@ -1,5 +1,7 @@
 """RFC 7807 Problem Details error handling."""
 
+from typing import Any
+
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
@@ -12,7 +14,7 @@ def problem_response(
     detail: str | None = None,
     instance: str | None = None,
 ) -> JSONResponse:
-    body: dict = {
+    body: dict[str, Any] = {
         "type": "about:blank",
         "title": title,
         "status": status_code,

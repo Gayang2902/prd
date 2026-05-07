@@ -1,10 +1,16 @@
+from __future__ import annotations
+
 import enum
 import uuid
+from typing import TYPE_CHECKING
 
 from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base, TimestampMixin, generate_uuid
+
+if TYPE_CHECKING:
+    from app.models.project import Project
 
 
 class Role(str, enum.Enum):
@@ -22,4 +28,4 @@ class User(TimestampMixin, Base):
     name: Mapped[str] = mapped_column(String(255))
     role: Mapped[Role] = mapped_column(default=Role.VIEWER)
 
-    projects: Mapped[list["Project"]] = relationship(back_populates="owner")  # noqa: F821
+    projects: Mapped[list[Project]] = relationship(back_populates="owner")  # noqa: F821

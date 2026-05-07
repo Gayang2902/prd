@@ -1,4 +1,5 @@
 import uuid
+from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -20,13 +21,13 @@ class PresetRepository:
     async def get(self, preset_id: uuid.UUID) -> Preset | None:
         return await self._session.get(Preset, preset_id)
 
-    async def create(self, **kwargs) -> Preset:
+    async def create(self, **kwargs: Any) -> Preset:
         preset = Preset(**kwargs)
         self._session.add(preset)
         await self._session.flush()
         return preset
 
-    async def update(self, preset: Preset, **kwargs) -> Preset:
+    async def update(self, preset: Preset, **kwargs: Any) -> Preset:
         for key, value in kwargs.items():
             if value is not None:
                 setattr(preset, key, value)

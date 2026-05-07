@@ -5,6 +5,7 @@ a comment, the event is broadcast to all other connected reviewers.
 """
 
 from collections import defaultdict
+from typing import Any
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
@@ -13,7 +14,9 @@ router = APIRouter()
 _connections: dict[str, set[WebSocket]] = defaultdict(set)
 
 
-async def broadcast(session_id: str, event: dict, exclude: WebSocket | None = None) -> None:
+async def broadcast(
+    session_id: str, event: dict[str, Any], exclude: WebSocket | None = None
+) -> None:
     dead: list[WebSocket] = []
     for ws in _connections[session_id]:
         if ws is exclude:
@@ -27,7 +30,7 @@ async def broadcast(session_id: str, event: dict, exclude: WebSocket | None = No
 
 
 @router.websocket("/ws/sessions/{session_id}")
-async def session_ws(websocket: WebSocket, session_id: str):
+async def session_ws(websocket: WebSocket, session_id: str) -> None:
     await websocket.accept()
     _connections[session_id].add(websocket)
 

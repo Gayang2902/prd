@@ -1,5 +1,7 @@
 import uuid
+from collections.abc import AsyncGenerator
 from datetime import UTC, datetime
+from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import StreamingResponse
@@ -39,7 +41,7 @@ async def list_sessions(
 async def create_session(
     project_id: uuid.UUID,
     payload: SessionCreate,
-    _user=require_role(Role.REVIEWER),
+    _user: Any = require_role(Role.REVIEWER),
     repo: SessionRepository = Depends(_get_repo),
     db: AsyncSession = Depends(get_session),
 ) -> SessionRead:
@@ -80,7 +82,7 @@ async def get_session_detail(
 @router.post("/sessions/{session_id}/cancel", response_model=SessionRead)
 async def cancel_session(
     session_id: uuid.UUID,
-    _user=require_role(Role.REVIEWER),
+    _user: Any = require_role(Role.REVIEWER),
     repo: SessionRepository = Depends(_get_repo),
     db: AsyncSession = Depends(get_session),
 ) -> SessionRead:
@@ -104,7 +106,7 @@ async def stream_session_logs(
     if analysis is None:
         raise HTTPException(status_code=404, detail="Session not found")
 
-    async def event_generator():
+    async def event_generator() -> AsyncGenerator[str, None]:
         state = analysis.state.value
         ts = datetime.now(UTC).isoformat()
         yield f'event: state\ndata: {{"state": "{state}", "ts": "{ts}"}}\n\n'

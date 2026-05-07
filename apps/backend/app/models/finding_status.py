@@ -1,11 +1,18 @@
+from __future__ import annotations
+
 import enum
 import uuid
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import DateTime, ForeignKey, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base, generate_uuid
+
+if TYPE_CHECKING:
+    from app.models.finding import Finding
+    from app.models.user import User
 
 
 class VerificationStatus(str, enum.Enum):
@@ -27,5 +34,5 @@ class FindingStatus(Base):
     reason: Mapped[str | None] = mapped_column(Text, default=None)
     changed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
-    finding: Mapped["Finding"] = relationship(back_populates="statuses")  # noqa: F821
-    user: Mapped["User"] = relationship()  # noqa: F821
+    finding: Mapped[Finding] = relationship(back_populates="statuses")  # noqa: F821
+    user: Mapped[User] = relationship()  # noqa: F821

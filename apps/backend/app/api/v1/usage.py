@@ -1,4 +1,5 @@
 from datetime import date
+from typing import Any
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -14,9 +15,9 @@ router = APIRouter(prefix="/usage", tags=["usage"])
 async def get_cost_summary(
     since: date | None = Query(None),
     until: date | None = Query(None),
-    _role=require_role(Role.VIEWER),
+    _role: Any = require_role(Role.VIEWER),
     db: AsyncSession = Depends(get_session),
-) -> dict:
+) -> dict[str, Any]:
     return await cost_summary(db, since=since, until=until)
 
 
@@ -24,9 +25,9 @@ async def get_cost_summary(
 async def get_cost_by_project(
     since: date | None = Query(None),
     until: date | None = Query(None),
-    _role=require_role(Role.VIEWER),
+    _role: Any = require_role(Role.VIEWER),
     db: AsyncSession = Depends(get_session),
-) -> list[dict]:
+) -> list[dict[str, Any]]:
     return await cost_by_project(db, since=since, until=until)
 
 
@@ -34,9 +35,9 @@ async def get_cost_by_project(
 async def get_cost_by_agent(
     since: date | None = Query(None),
     until: date | None = Query(None),
-    _role=require_role(Role.VIEWER),
+    _role: Any = require_role(Role.VIEWER),
     db: AsyncSession = Depends(get_session),
-) -> list[dict]:
+) -> list[dict[str, Any]]:
     return await cost_by_agent(db, since=since, until=until)
 
 
@@ -44,7 +45,7 @@ async def get_cost_by_agent(
 async def get_cost_daily(
     since: date | None = Query(None),
     until: date | None = Query(None),
-    _role=require_role(Role.VIEWER),
+    _role: Any = require_role(Role.VIEWER),
     db: AsyncSession = Depends(get_session),
-) -> list[dict]:
+) -> list[dict[str, Any]]:
     return await cost_daily(db, since=since, until=until)

@@ -1,5 +1,6 @@
 import uuid
 from datetime import datetime
+from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -64,7 +65,7 @@ async def update_finding_status(
     finding_id: uuid.UUID,
     payload: FindingStatusUpdate,
     user: CurrentUser,
-    _role=require_role(Role.REVIEWER),
+    _role: Any = require_role(Role.REVIEWER),
     repo: FindingRepository = Depends(_get_repo),
     db: AsyncSession = Depends(get_session),
 ) -> FindingStatusRead:
@@ -104,7 +105,7 @@ async def create_comment(
     finding_id: uuid.UUID,
     payload: CommentCreate,
     user: CurrentUser,
-    _role=require_role(Role.REVIEWER),
+    _role: Any = require_role(Role.REVIEWER),
     repo: CommentRepository = Depends(_get_comment_repo),
     db: AsyncSession = Depends(get_session),
 ) -> CommentRead:

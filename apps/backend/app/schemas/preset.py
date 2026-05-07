@@ -1,5 +1,6 @@
 import uuid
 from datetime import datetime
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -9,7 +10,7 @@ class PresetCreate(BaseModel):
     agent_id: uuid.UUID
     version_sha: str
     prompt_template: str = ""
-    ruleset: dict = {}
+    ruleset: dict[str, Any] = {}
     timeout_seconds: int = 1800
     max_retries: int = 3
     is_shared: bool = False
@@ -18,7 +19,7 @@ class PresetCreate(BaseModel):
 class PresetUpdate(BaseModel):
     name: str | None = None
     prompt_template: str | None = None
-    ruleset: dict | None = None
+    ruleset: dict[str, Any] | None = None
     timeout_seconds: int | None = None
     max_retries: int | None = None
     is_shared: bool | None = None
@@ -32,7 +33,7 @@ class PresetRead(BaseModel):
     agent_id: uuid.UUID
     version_sha: str
     prompt_template: str
-    ruleset: dict
+    ruleset: dict[str, Any]
     timeout_seconds: int
     max_retries: int
     is_shared: bool

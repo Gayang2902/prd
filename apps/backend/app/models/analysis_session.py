@@ -1,12 +1,21 @@
+from __future__ import annotations
+
 import enum
 import uuid
 from datetime import datetime
 from decimal import Decimal
+from typing import TYPE_CHECKING
 
 from sqlalchemy import DateTime, ForeignKey, Integer, Numeric, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base, generate_uuid
+
+if TYPE_CHECKING:
+    from app.models.agent import Agent
+    from app.models.finding import Finding
+    from app.models.preset import Preset
+    from app.models.project import Project
 
 
 class SessionPriority(str, enum.Enum):
@@ -42,7 +51,7 @@ class AnalysisSession(Base):
     token_usage: Mapped[int] = mapped_column(Integer, default=0)
     cost: Mapped[Decimal] = mapped_column(Numeric(10, 4), default=Decimal("0"))
 
-    project: Mapped["Project"] = relationship(back_populates="sessions")  # noqa: F821
-    agent: Mapped["Agent"] = relationship()  # noqa: F821
-    preset: Mapped["Preset"] = relationship()  # noqa: F821
-    findings: Mapped[list["Finding"]] = relationship(back_populates="session")  # noqa: F821
+    project: Mapped[Project] = relationship(back_populates="sessions")  # noqa: F821
+    agent: Mapped[Agent] = relationship()  # noqa: F821
+    preset: Mapped[Preset] = relationship()  # noqa: F821
+    findings: Mapped[list[Finding]] = relationship(back_populates="session")  # noqa: F821

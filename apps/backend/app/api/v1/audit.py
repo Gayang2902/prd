@@ -1,5 +1,6 @@
 import uuid
 from datetime import datetime
+from typing import Any
 
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel
@@ -32,7 +33,7 @@ async def get_audit_logs(
     user_id: uuid.UUID | None = Query(None),
     limit: int = Query(100, le=500),
     offset: int = Query(0, ge=0),
-    _role=require_role(Role.ADMIN),
+    _role: Any = require_role(Role.ADMIN),
     db: AsyncSession = Depends(get_session),
 ) -> list[AuditLogRead]:
     logs = await list_audit_logs(

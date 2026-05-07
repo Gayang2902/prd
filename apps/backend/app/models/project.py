@@ -1,11 +1,18 @@
+from __future__ import annotations
+
 import enum
 import uuid
 from datetime import date
+from typing import TYPE_CHECKING
 
 from sqlalchemy import ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base, TimestampMixin, generate_uuid
+
+if TYPE_CHECKING:
+    from app.models.analysis_session import AnalysisSession
+    from app.models.user import User
 
 
 class Priority(str, enum.Enum):
@@ -34,5 +41,5 @@ class Project(TimestampMixin, Base):
     status: Mapped[ProjectStatus] = mapped_column(default=ProjectStatus.PENDING)
     deadline: Mapped[date | None] = mapped_column(default=None)
 
-    owner: Mapped["User"] = relationship(back_populates="projects")  # noqa: F821
-    sessions: Mapped[list["AnalysisSession"]] = relationship(back_populates="project")  # noqa: F821
+    owner: Mapped[User] = relationship(back_populates="projects")  # noqa: F821
+    sessions: Mapped[list[AnalysisSession]] = relationship(back_populates="project")  # noqa: F821
