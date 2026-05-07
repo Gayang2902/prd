@@ -1,12 +1,15 @@
-.PHONY: setup setup-backend setup-frontend lint lint-backend lint-frontend test test-backend test-frontend dev migrate openapi worker
+.PHONY: setup setup-backend setup-frontend setup-schemas lint lint-backend lint-frontend test test-backend test-frontend build build-frontend dev migrate openapi worker
 
 # ──────────────────────────────────────────────
 # Setup
 # ──────────────────────────────────────────────
-setup: setup-backend setup-frontend
+setup: setup-schemas setup-backend setup-frontend
+
+setup-schemas:
+	cd packages/shared-schemas && pip install -e .
 
 setup-backend:
-	cd apps/backend && python -m venv .venv && .venv/bin/pip install -e ".[dev]"
+	cd apps/backend && pip install -e ".[dev]"
 
 setup-frontend:
 	cd apps/frontend && npm install
@@ -32,6 +35,14 @@ test-backend:
 
 test-frontend:
 	cd apps/frontend && npm test 2>/dev/null || true
+
+# ──────────────────────────────────────────────
+# Build
+# ──────────────────────────────────────────────
+build: build-frontend
+
+build-frontend:
+	cd apps/frontend && npx next build
 
 # ──────────────────────────────────────────────
 # Dev
