@@ -43,7 +43,6 @@ def upgrade() -> None:
     )
 
 
-
 def downgrade() -> None:
     op.drop_column("presets", "is_shared")
     op.drop_column("presets", "version_sha")

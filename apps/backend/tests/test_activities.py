@@ -149,9 +149,7 @@ async def test_run_agent_no_result(mock_activity: MagicMock) -> None:
     mock_agent = AsyncMock()
 
     async def empty_analyze(_ctx: object):  # noqa: ANN202
-        yield LogEvent(
-            timestamp=datetime.now(), level=LogLevel.INFO, message="done", progress=1.0
-        )
+        yield LogEvent(timestamp=datetime.now(), level=LogLevel.INFO, message="done", progress=1.0)
 
     mock_agent.analyze = empty_analyze
     mock_agent_cls = MagicMock(return_value=mock_agent)
@@ -173,9 +171,7 @@ async def test_run_agent_runtime_limit(mock_time: MagicMock, mock_activity: Magi
     mock_agent = AsyncMock()
 
     async def slow_analyze(_ctx: object):  # noqa: ANN202
-        yield LogEvent(
-            timestamp=datetime.now(), level=LogLevel.INFO, message="tick", progress=0.1
-        )
+        yield LogEvent(timestamp=datetime.now(), level=LogLevel.INFO, message="tick", progress=0.1)
 
     mock_agent.analyze = slow_analyze
     mock_agent_cls = MagicMock(return_value=mock_agent)
