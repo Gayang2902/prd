@@ -34,7 +34,7 @@ test-backend:
 	cd apps/backend && .venv/bin/pytest --cov=app --cov-report=term-missing
 
 test-frontend:
-	cd apps/frontend && npm test 2>/dev/null || true
+	cd apps/frontend && npm test
 
 # ──────────────────────────────────────────────
 # Build
