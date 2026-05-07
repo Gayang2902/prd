@@ -1,26 +1,26 @@
-'use client';
+"use client";
 
-import { useState, type FormEvent } from 'react';
-import { useCreateSession } from '@/lib/hooks/use-sessions';
-import { useAgents } from '@/lib/hooks/use-agents';
-import { usePresets } from '@/lib/hooks/use-presets';
-import { Button } from '@/components/ui/button';
+import { useState, type FormEvent } from "react";
+import { useCreateSession } from "@/lib/hooks/use-sessions";
+import { useAgents } from "@/lib/hooks/use-agents";
+import { usePresets } from "@/lib/hooks/use-presets";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 
 interface Props {
   projectId: string;
@@ -28,12 +28,12 @@ interface Props {
 
 export function NewSessionDialog({ projectId }: Props) {
   const [open, setOpen] = useState(false);
-  const [branch, setBranch] = useState('');
-  const [commitSha, setCommitSha] = useState('');
-  const [diffBaseSha, setDiffBaseSha] = useState('');
-  const [agentId, setAgentId] = useState('');
-  const [presetId, setPresetId] = useState('');
-  const [includePaths, setIncludePaths] = useState('');
+  const [branch, setBranch] = useState("");
+  const [commitSha, setCommitSha] = useState("");
+  const [diffBaseSha, setDiffBaseSha] = useState("");
+  const [agentId, setAgentId] = useState("");
+  const [presetId, setPresetId] = useState("");
+  const [includePaths, setIncludePaths] = useState("");
 
   const createSession = useCreateSession(projectId);
   const { data: agents } = useAgents();
@@ -47,13 +47,13 @@ export function NewSessionDialog({ projectId }: Props) {
       branch,
       commit_sha: commitSha || null,
       diff_base_sha: diffBaseSha || null,
-      preset_id: presetId || '00000000-0000-0000-0000-000000000001',
-      agent_id: agentId || '00000000-0000-0000-0000-000000000001',
+      preset_id: presetId || "00000000-0000-0000-0000-000000000001",
+      agent_id: agentId || "00000000-0000-0000-0000-000000000001",
     });
     setOpen(false);
-    setBranch('');
-    setCommitSha('');
-    setDiffBaseSha('');
+    setBranch("");
+    setCommitSha("");
+    setDiffBaseSha("");
   };
 
   return (
@@ -68,7 +68,7 @@ export function NewSessionDialog({ projectId }: Props) {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="agent">에이전트</Label>
-            <Select value={agentId} onValueChange={(v) => setAgentId(v ?? '')}>
+            <Select value={agentId} onValueChange={(v) => setAgentId(v ?? "")}>
               <SelectTrigger>
                 <SelectValue placeholder="에이전트 선택" />
               </SelectTrigger>
@@ -87,7 +87,10 @@ export function NewSessionDialog({ projectId }: Props) {
 
           <div className="space-y-2">
             <Label htmlFor="preset">프리셋</Label>
-            <Select value={presetId} onValueChange={(v) => setPresetId(v ?? '')}>
+            <Select
+              value={presetId}
+              onValueChange={(v) => setPresetId(v ?? "")}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="프리셋 선택" />
               </SelectTrigger>
@@ -98,7 +101,9 @@ export function NewSessionDialog({ projectId }: Props) {
                   </SelectItem>
                 ))}
                 {(!presets || presets.length === 0) && (
-                  <SelectItem value="00000000-0000-0000-0000-000000000001">기본 프리셋</SelectItem>
+                  <SelectItem value="00000000-0000-0000-0000-000000000001">
+                    기본 프리셋
+                  </SelectItem>
                 )}
               </SelectContent>
             </Select>
@@ -146,8 +151,12 @@ export function NewSessionDialog({ projectId }: Props) {
             />
           </div>
 
-          <Button type="submit" className="w-full" disabled={createSession.isPending}>
-            {createSession.isPending ? '실행 중...' : '분석 시작'}
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={createSession.isPending}
+          >
+            {createSession.isPending ? "실행 중..." : "분석 시작"}
           </Button>
         </form>
       </DialogContent>

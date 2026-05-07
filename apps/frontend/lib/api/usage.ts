@@ -1,4 +1,4 @@
-import { apiFetch } from './client';
+import { apiFetch } from "./client";
 
 export interface CostSummary {
   total_sessions: number;
@@ -29,24 +29,38 @@ export interface DailyCost {
 
 function dateParams(since?: string, until?: string): string {
   const q = new URLSearchParams();
-  if (since) q.set('since', since);
-  if (until) q.set('until', until);
+  if (since) q.set("since", since);
+  if (until) q.set("until", until);
   const qs = q.toString();
-  return qs ? `?${qs}` : '';
+  return qs ? `?${qs}` : "";
 }
 
-export function fetchCostSummary(since?: string, until?: string): Promise<CostSummary> {
+export function fetchCostSummary(
+  since?: string,
+  until?: string,
+): Promise<CostSummary> {
   return apiFetch<CostSummary>(`/usage/cost${dateParams(since, until)}`);
 }
 
-export function fetchCostByProject(since?: string, until?: string): Promise<CostByProject[]> {
-  return apiFetch<CostByProject[]>(`/usage/by-project${dateParams(since, until)}`);
+export function fetchCostByProject(
+  since?: string,
+  until?: string,
+): Promise<CostByProject[]> {
+  return apiFetch<CostByProject[]>(
+    `/usage/by-project${dateParams(since, until)}`,
+  );
 }
 
-export function fetchCostByAgent(since?: string, until?: string): Promise<CostByAgent[]> {
+export function fetchCostByAgent(
+  since?: string,
+  until?: string,
+): Promise<CostByAgent[]> {
   return apiFetch<CostByAgent[]>(`/usage/by-agent${dateParams(since, until)}`);
 }
 
-export function fetchDailyCost(since?: string, until?: string): Promise<DailyCost[]> {
+export function fetchDailyCost(
+  since?: string,
+  until?: string,
+): Promise<DailyCost[]> {
   return apiFetch<DailyCost[]>(`/usage/daily${dateParams(since, until)}`);
 }

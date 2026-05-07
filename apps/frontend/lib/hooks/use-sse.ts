@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from "react";
 
 export interface SSEEvent {
   event: string;
@@ -23,14 +23,17 @@ export function useSSE(url: string | null) {
     source.onerror = () => setConnected(false);
 
     const handler = (type: string) => (e: MessageEvent) => {
-      setEvents((prev) => [...prev, { event: type, data: e.data, timestamp: Date.now() }]);
+      setEvents((prev) => [
+        ...prev,
+        { event: type, data: e.data, timestamp: Date.now() },
+      ]);
     };
 
-    source.addEventListener('state', handler('state'));
-    source.addEventListener('progress', handler('progress'));
-    source.addEventListener('log', handler('log'));
-    source.addEventListener('done', (e) => {
-      handler('done')(e);
+    source.addEventListener("state", handler("state"));
+    source.addEventListener("progress", handler("progress"));
+    source.addEventListener("log", handler("log"));
+    source.addEventListener("done", (e) => {
+      handler("done")(e);
       source.close();
       setConnected(false);
     });

@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 export default function ProfilePage() {
   return (
@@ -10,7 +10,9 @@ export default function ProfilePage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-sm font-medium text-muted-foreground">계정 정보</CardTitle>
+          <CardTitle className="text-sm font-medium text-muted-foreground">
+            계정 정보
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3 text-sm">
           <div className="flex justify-between">
@@ -25,20 +27,24 @@ export default function ProfilePage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-sm font-medium text-muted-foreground">단축키</CardTitle>
+          <CardTitle className="text-sm font-medium text-muted-foreground">
+            단축키
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 gap-2 text-sm">
             {[
-              ['j / k', '이전 / 다음 발견'],
-              ['c', '확정 (Confirmed)'],
-              ['f', '오탐 (False Positive)'],
-              ['r', '검토 필요 (Needs Review)'],
-              ['e', '코드 확대'],
-              ['?', '단축키 도움말'],
+              ["j / k", "이전 / 다음 발견"],
+              ["c", "확정 (Confirmed)"],
+              ["f", "오탐 (False Positive)"],
+              ["r", "검토 필요 (Needs Review)"],
+              ["e", "코드 확대"],
+              ["?", "단축키 도움말"],
             ].map(([key, desc]) => (
               <div key={key} className="flex justify-between py-1">
-                <kbd className="px-2 py-0.5 bg-muted rounded text-xs font-mono">{key}</kbd>
+                <kbd className="px-2 py-0.5 bg-muted rounded text-xs font-mono">
+                  {key}
+                </kbd>
                 <span className="text-muted-foreground text-xs">{desc}</span>
               </div>
             ))}

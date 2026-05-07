@@ -1,29 +1,29 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const STEPS = [
   {
-    title: 'SecureScope에 오신 것을 환영합니다',
-    body: 'AI 기반 코드 보안 검수 플랫폼입니다. 프로젝트를 등록하고, 분석을 실행하고, 발견된 취약점을 검증하세요.',
+    title: "SecureScope에 오신 것을 환영합니다",
+    body: "AI 기반 코드 보안 검수 플랫폼입니다. 프로젝트를 등록하고, 분석을 실행하고, 발견된 취약점을 검증하세요.",
   },
   {
-    title: '1. 프로젝트 등록',
-    body: 'GitLab 프로젝트를 연결하면 브랜치/커밋 단위로 분석을 실행할 수 있습니다.',
+    title: "1. 프로젝트 등록",
+    body: "GitLab 프로젝트를 연결하면 브랜치/커밋 단위로 분석을 실행할 수 있습니다.",
   },
   {
-    title: '2. 분석 실행',
-    body: '에이전트(Claude Code, Codex)와 프리셋을 선택해 분석을 시작하세요. 큐에서 순서를 확인할 수 있습니다.',
+    title: "2. 분석 실행",
+    body: "에이전트(Claude Code, Codex)와 프리셋을 선택해 분석을 시작하세요. 큐에서 순서를 확인할 수 있습니다.",
   },
   {
-    title: '3. 취약점 검증',
-    body: '발견된 취약점을 코드와 함께 확인하고, 확정/오탐/검토 판정을 부여하세요. 단축키(j/k/c/f/r)를 지원합니다.',
+    title: "3. 취약점 검증",
+    body: "발견된 취약점을 코드와 함께 확인하고, 확정/오탐/검토 판정을 부여하세요. 단축키(j/k/c/f/r)를 지원합니다.",
   },
 ] as const;
 
-const ONBOARDING_KEY = 'securescope_onboarding_done';
+const ONBOARDING_KEY = "securescope_onboarding_done";
 
 export function OnboardingModal() {
   const [visible, setVisible] = useState(false);
@@ -41,7 +41,7 @@ export function OnboardingModal() {
   const isLast = step === STEPS.length - 1;
 
   function dismiss() {
-    localStorage.setItem(ONBOARDING_KEY, '1');
+    localStorage.setItem(ONBOARDING_KEY, "1");
     setVisible(false);
   }
 

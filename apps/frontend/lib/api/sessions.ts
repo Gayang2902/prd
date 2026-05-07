@@ -1,4 +1,4 @@
-import { apiFetch } from './client';
+import { apiFetch } from "./client";
 
 export interface Session {
   id: string;
@@ -8,8 +8,15 @@ export interface Session {
   preset_id: string;
   model_version: string;
   container_image_sha: string | null;
-  state: 'queued' | 'preparing' | 'running' | 'post_processing' | 'completed' | 'failed' | 'canceled';
-  priority: 'urgent' | 'normal' | 'background';
+  state:
+    | "queued"
+    | "preparing"
+    | "running"
+    | "post_processing"
+    | "completed"
+    | "failed"
+    | "canceled";
+  priority: "urgent" | "normal" | "background";
   started_at: string;
   completed_at: string | null;
   token_usage: number;
@@ -33,18 +40,22 @@ export function fetchSession(sessionId: string): Promise<Session> {
   return apiFetch<Session>(`/sessions/${sessionId}`);
 }
 
-export function createSession(projectId: string, data: SessionCreate): Promise<Session> {
+export function createSession(
+  projectId: string,
+  data: SessionCreate,
+): Promise<Session> {
   return apiFetch<Session>(`/projects/${projectId}/sessions`, {
-    method: 'POST',
+    method: "POST",
     body: JSON.stringify(data),
   });
 }
 
 export function cancelSession(sessionId: string): Promise<Session> {
-  return apiFetch<Session>(`/sessions/${sessionId}/cancel`, { method: 'POST' });
+  return apiFetch<Session>(`/sessions/${sessionId}/cancel`, { method: "POST" });
 }
 
 export function getLogsUrl(sessionId: string): string {
-  const base = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000/api/v1';
+  const base =
+    process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
   return `${base}/sessions/${sessionId}/logs`;
 }

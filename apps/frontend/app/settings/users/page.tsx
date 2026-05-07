@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useQuery } from '@tanstack/react-query';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useQuery } from "@tanstack/react-query";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -10,28 +10,34 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { apiFetch } from '@/lib/api/client';
+} from "@/components/ui/table";
+import { apiFetch } from "@/lib/api/client";
 
 interface User {
   id: string;
   email: string;
   name: string;
-  role: 'admin' | 'lead' | 'reviewer' | 'viewer';
+  role: "admin" | "lead" | "reviewer" | "viewer";
   created_at: string;
 }
 
-const ROLE_LABEL: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
-  admin: { label: 'Admin', variant: 'destructive' },
-  lead: { label: 'Lead', variant: 'default' },
-  reviewer: { label: 'Reviewer', variant: 'secondary' },
-  viewer: { label: 'Viewer', variant: 'outline' },
+const ROLE_LABEL: Record<
+  string,
+  {
+    label: string;
+    variant: "default" | "secondary" | "destructive" | "outline";
+  }
+> = {
+  admin: { label: "Admin", variant: "destructive" },
+  lead: { label: "Lead", variant: "default" },
+  reviewer: { label: "Reviewer", variant: "secondary" },
+  viewer: { label: "Viewer", variant: "outline" },
 };
 
 export default function UsersPage() {
   const { data: users, isLoading } = useQuery({
-    queryKey: ['users'],
-    queryFn: () => apiFetch<User[]>('/users'),
+    queryKey: ["users"],
+    queryFn: () => apiFetch<User[]>("/users"),
   });
 
   return (
@@ -57,20 +63,20 @@ export default function UsersPage() {
             </TableHeader>
             <TableBody>
               {[
-                ['프로젝트 조회', true, true, true, true],
-                ['발견 조회', true, true, true, true],
-                ['발견 검증', false, true, true, true],
-                ['코멘트 작성', false, true, true, true],
-                ['분석 실행', false, true, true, true],
-                ['프리셋 관리', false, false, true, true],
-                ['사용자 관리', false, false, false, true],
-                ['감사 로그', false, false, false, true],
+                ["프로젝트 조회", true, true, true, true],
+                ["발견 조회", true, true, true, true],
+                ["발견 검증", false, true, true, true],
+                ["코멘트 작성", false, true, true, true],
+                ["분석 실행", false, true, true, true],
+                ["프리셋 관리", false, false, true, true],
+                ["사용자 관리", false, false, false, true],
+                ["감사 로그", false, false, false, true],
               ].map(([label, ...perms]) => (
                 <TableRow key={label as string}>
                   <TableCell className="text-xs">{label as string}</TableCell>
                   {(perms as boolean[]).map((ok, i) => (
                     <TableCell key={i} className="text-center text-xs">
-                      {ok ? '✓' : '—'}
+                      {ok ? "✓" : "—"}
                     </TableCell>
                   ))}
                 </TableRow>
@@ -82,7 +88,9 @@ export default function UsersPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-sm font-medium text-muted-foreground">사용자 목록</CardTitle>
+          <CardTitle className="text-sm font-medium text-muted-foreground">
+            사용자 목록
+          </CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -101,16 +109,21 @@ export default function UsersPage() {
               </TableHeader>
               <TableBody>
                 {users.map((u) => {
-                  const roleConfig = ROLE_LABEL[u.role] ?? { label: u.role, variant: 'outline' as const };
+                  const roleConfig = ROLE_LABEL[u.role] ?? {
+                    label: u.role,
+                    variant: "outline" as const,
+                  };
                   return (
                     <TableRow key={u.id}>
                       <TableCell>{u.name}</TableCell>
                       <TableCell className="text-xs">{u.email}</TableCell>
                       <TableCell>
-                        <Badge variant={roleConfig.variant}>{roleConfig.label}</Badge>
+                        <Badge variant={roleConfig.variant}>
+                          {roleConfig.label}
+                        </Badge>
                       </TableCell>
                       <TableCell className="text-xs">
-                        {new Date(u.created_at).toLocaleDateString('ko-KR')}
+                        {new Date(u.created_at).toLocaleDateString("ko-KR")}
                       </TableCell>
                     </TableRow>
                   );

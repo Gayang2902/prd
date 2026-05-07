@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { Badge } from '@/components/ui/badge';
+import Link from "next/link";
+import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -9,17 +9,17 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { useSessions } from '@/lib/hooks/use-sessions';
+} from "@/components/ui/table";
+import { useSessions } from "@/lib/hooks/use-sessions";
 
 const STATE_LABEL: Record<string, string> = {
-  queued: '대기',
-  preparing: '준비중',
-  running: '실행중',
-  post_processing: '후처리',
-  completed: '완료',
-  failed: '실패',
-  canceled: '취소',
+  queued: "대기",
+  preparing: "준비중",
+  running: "실행중",
+  post_processing: "후처리",
+  completed: "완료",
+  failed: "실패",
+  canceled: "취소",
 };
 
 interface Props {
@@ -34,7 +34,9 @@ export function SessionHistory({ projectId }: Props) {
   }
 
   if (!sessions?.length) {
-    return <p className="text-sm text-muted-foreground">분석 이력이 없습니다.</p>;
+    return (
+      <p className="text-sm text-muted-foreground">분석 이력이 없습니다.</p>
+    );
   }
 
   return (
@@ -53,28 +55,33 @@ export function SessionHistory({ projectId }: Props) {
         {sessions.map((s) => (
           <TableRow key={s.id}>
             <TableCell>
-              <Link href={`/sessions/${s.id}`} className="font-mono text-xs hover:underline">
+              <Link
+                href={`/sessions/${s.id}`}
+                className="font-mono text-xs hover:underline"
+              >
                 {s.commit_sha.slice(0, 8)}
               </Link>
             </TableCell>
             <TableCell>
               <Badge
                 variant={
-                  s.state === 'completed'
-                    ? 'secondary'
-                    : s.state === 'failed'
-                      ? 'destructive'
-                      : 'outline'
+                  s.state === "completed"
+                    ? "secondary"
+                    : s.state === "failed"
+                      ? "destructive"
+                      : "outline"
                 }
               >
                 {STATE_LABEL[s.state] ?? s.state}
               </Badge>
             </TableCell>
             <TableCell className="text-xs">{s.model_version}</TableCell>
-            <TableCell className="text-xs tabular-nums">{s.token_usage.toLocaleString()}</TableCell>
+            <TableCell className="text-xs tabular-nums">
+              {s.token_usage.toLocaleString()}
+            </TableCell>
             <TableCell className="text-xs tabular-nums">${s.cost}</TableCell>
             <TableCell className="text-xs">
-              {new Date(s.started_at).toLocaleDateString('ko-KR')}
+              {new Date(s.started_at).toLocaleDateString("ko-KR")}
             </TableCell>
           </TableRow>
         ))}

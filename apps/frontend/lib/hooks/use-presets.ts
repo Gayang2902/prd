@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createPreset,
   deletePreset,
@@ -8,11 +8,11 @@ import {
   updatePreset,
   type PresetCreate,
   type PresetUpdate,
-} from '../api/presets';
+} from "../api/presets";
 
 export function usePresets(agentId?: string) {
   return useQuery({
-    queryKey: ['presets', agentId],
+    queryKey: ["presets", agentId],
     queryFn: () => fetchPresets(agentId),
   });
 }
@@ -21,15 +21,16 @@ export function useCreatePreset() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (data: PresetCreate) => createPreset(data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['presets'] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["presets"] }),
   });
 }
 
 export function useUpdatePreset() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: PresetUpdate }) => updatePreset(id, data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['presets'] }),
+    mutationFn: ({ id, data }: { id: string; data: PresetUpdate }) =>
+      updatePreset(id, data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["presets"] }),
   });
 }
 
@@ -37,6 +38,6 @@ export function useDeletePreset() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => deletePreset(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['presets'] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["presets"] }),
   });
 }

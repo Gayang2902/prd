@@ -1,4 +1,4 @@
-import { apiFetch } from './client';
+import { apiFetch } from "./client";
 
 export interface Comment {
   id: string;
@@ -12,9 +12,12 @@ export function fetchComments(findingId: string): Promise<Comment[]> {
   return apiFetch<Comment[]>(`/findings/${findingId}/comments`);
 }
 
-export function createComment(findingId: string, content: string): Promise<Comment> {
+export function createComment(
+  findingId: string,
+  content: string,
+): Promise<Comment> {
   return apiFetch<Comment>(`/findings/${findingId}/comments`, {
-    method: 'POST',
+    method: "POST",
     body: JSON.stringify({ content }),
   });
 }

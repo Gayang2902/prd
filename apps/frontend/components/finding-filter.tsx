@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import {
   Select,
@@ -6,16 +6,23 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 
-const SEVERITIES = ['all', 'critical', 'high', 'medium', 'low', 'info'] as const;
+const SEVERITIES = [
+  "all",
+  "critical",
+  "high",
+  "medium",
+  "low",
+  "info",
+] as const;
 const SEVERITY_LABELS: Record<string, string> = {
-  all: '전체 심각도',
-  critical: 'Critical',
-  high: 'High',
-  medium: 'Medium',
-  low: 'Low',
-  info: 'Info',
+  all: "전체 심각도",
+  critical: "Critical",
+  high: "High",
+  medium: "Medium",
+  low: "Low",
+  info: "Info",
 };
 
 interface Props {
@@ -35,7 +42,10 @@ export function FindingFilter({
 }: Props) {
   return (
     <div className="flex gap-2">
-      <Select value={severity} onValueChange={(v) => onSeverityChange(v ?? 'all')}>
+      <Select
+        value={severity}
+        onValueChange={(v) => onSeverityChange(v ?? "all")}
+      >
         <SelectTrigger className="w-[140px] h-8 text-xs">
           <SelectValue />
         </SelectTrigger>
@@ -48,7 +58,10 @@ export function FindingFilter({
         </SelectContent>
       </Select>
 
-      <Select value={category} onValueChange={(v) => onCategoryChange(v ?? 'all')}>
+      <Select
+        value={category}
+        onValueChange={(v) => onCategoryChange(v ?? "all")}
+      >
         <SelectTrigger className="w-[160px] h-8 text-xs">
           <SelectValue />
         </SelectTrigger>

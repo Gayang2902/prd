@@ -1,4 +1,4 @@
-import { apiFetch } from './client';
+import { apiFetch } from "./client";
 
 export interface AgentInfo {
   name: string;
@@ -10,5 +10,5 @@ export interface AgentInfo {
 }
 
 export function fetchAgents(): Promise<Record<string, AgentInfo>> {
-  return apiFetch<Record<string, AgentInfo>>('/agents');
+  return apiFetch<Record<string, AgentInfo>>("/agents");
 }

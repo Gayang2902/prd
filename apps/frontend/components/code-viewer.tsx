@@ -1,19 +1,22 @@
-'use client';
+"use client";
 
-import dynamic from 'next/dynamic';
-import type { Finding } from '@/lib/api/findings';
+import dynamic from "next/dynamic";
+import type { Finding } from "@/lib/api/findings";
 
-const Editor = dynamic(() => import('@monaco-editor/react').then((m) => m.default), {
-  ssr: false,
-  loading: () => <div className="h-full bg-muted animate-pulse" />,
-});
+const Editor = dynamic(
+  () => import("@monaco-editor/react").then((m) => m.default),
+  {
+    ssr: false,
+    loading: () => <div className="h-full bg-muted animate-pulse" />,
+  },
+);
 
 interface Props {
   finding: Finding | null;
 }
 
 const SAMPLE_CODE: Record<string, string> = {
-  'src/api/users.py': `import sqlite3
+  "src/api/users.py": `import sqlite3
 
 def get_user(username):
     conn = sqlite3.connect('app.db')
@@ -28,7 +31,7 @@ def create_user(username, email):
     cursor = conn.cursor()
     cursor.execute("INSERT INTO users (name, email) VALUES (?, ?)", (username, email))
     conn.commit()`,
-  'src/views/profile.html': `<!DOCTYPE html>
+  "src/views/profile.html": `<!DOCTYPE html>
 <html>
 <head><title>Profile</title></head>
 <body>
@@ -39,7 +42,7 @@ def create_user(username, email):
   </div>
 </body>
 </html>`,
-  'src/config.py': `import os
+  "src/config.py": `import os
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///app.db")
 SECRET_KEY = os.getenv("SECRET_KEY", "dev-only")
@@ -47,7 +50,7 @@ DEBUG = os.getenv("DEBUG", "false").lower() == "true"
 
 AWS_KEY = "AKIA..."
 AWS_SECRET = "wJalr..."`,
-  'src/api/files.py': `import os
+  "src/api/files.py": `import os
 from pathlib import Path
 
 UPLOAD_DIR = "/var/uploads"
@@ -59,7 +62,7 @@ def get_file(request):
         return {"error": "not found"}, 404
     with open(path, "rb") as f:
         return f.read()`,
-  'src/auth/password.py': `import hashlib
+  "src/auth/password.py": `import hashlib
 
 def hash_password(password):
     return hashlib.md5(password.encode()).hexdigest()
@@ -69,11 +72,13 @@ def verify_password(password, hashed):
 };
 
 function getLanguage(filePath: string): string {
-  if (filePath.endsWith('.py')) return 'python';
-  if (filePath.endsWith('.html')) return 'html';
-  if (filePath.endsWith('.ts') || filePath.endsWith('.tsx')) return 'typescript';
-  if (filePath.endsWith('.js') || filePath.endsWith('.jsx')) return 'javascript';
-  return 'plaintext';
+  if (filePath.endsWith(".py")) return "python";
+  if (filePath.endsWith(".html")) return "html";
+  if (filePath.endsWith(".ts") || filePath.endsWith(".tsx"))
+    return "typescript";
+  if (filePath.endsWith(".js") || filePath.endsWith(".jsx"))
+    return "javascript";
+  return "plaintext";
 }
 
 export function CodeViewer({ finding }: Props) {
@@ -85,7 +90,9 @@ export function CodeViewer({ finding }: Props) {
     );
   }
 
-  const code = SAMPLE_CODE[finding.file_path] ?? `// ${finding.file_path}\n// 코드를 불러올 수 없습니다.`;
+  const code =
+    SAMPLE_CODE[finding.file_path] ??
+    `// ${finding.file_path}\n// 코드를 불러올 수 없습니다.`;
   const language = getLanguage(finding.file_path);
 
   return (
@@ -102,27 +109,30 @@ export function CodeViewer({ finding }: Props) {
           options={{
             readOnly: true,
             minimap: { enabled: true },
-            lineNumbers: 'on',
+            lineNumbers: "on",
             scrollBeyondLastLine: false,
             fontSize: 13,
           }}
           onMount={(editor) => {
             editor.revealLineInCenter(finding.line_start);
-            editor.deltaDecorations([], [
-              {
-                range: {
-                  startLineNumber: finding.line_start,
-                  startColumn: 1,
-                  endLineNumber: finding.line_end,
-                  endColumn: 1,
+            editor.deltaDecorations(
+              [],
+              [
+                {
+                  range: {
+                    startLineNumber: finding.line_start,
+                    startColumn: 1,
+                    endLineNumber: finding.line_end,
+                    endColumn: 1,
+                  },
+                  options: {
+                    isWholeLine: true,
+                    className: "bg-red-500/20",
+                    glyphMarginClassName: "bg-red-500",
+                  },
                 },
-                options: {
-                  isWholeLine: true,
-                  className: 'bg-red-500/20',
-                  glyphMarginClassName: 'bg-red-500',
-                },
-              },
-            ]);
+              ],
+            );
           }}
         />
       </div>

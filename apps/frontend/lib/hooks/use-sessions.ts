@@ -1,28 +1,29 @@
-'use client';
+"use client";
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   cancelSession,
   createSession,
   fetchSession,
   fetchSessions,
   type SessionCreate,
-} from '../api/sessions';
+} from "../api/sessions";
 
 export function useSessions(projectId: string) {
   return useQuery({
-    queryKey: ['sessions', projectId],
+    queryKey: ["sessions", projectId],
     queryFn: () => fetchSessions(projectId),
   });
 }
 
 export function useSession(sessionId: string) {
   return useQuery({
-    queryKey: ['session', sessionId],
+    queryKey: ["session", sessionId],
     queryFn: () => fetchSession(sessionId),
     refetchInterval: (query) => {
       const state = query.state.data?.state;
-      if (state === 'completed' || state === 'failed' || state === 'canceled') return false;
+      if (state === "completed" || state === "failed" || state === "canceled")
+        return false;
       return 3000;
     },
   });
@@ -32,7 +33,8 @@ export function useCreateSession(projectId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (data: SessionCreate) => createSession(projectId, data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['sessions', projectId] }),
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: ["sessions", projectId] }),
   });
 }
 
@@ -41,8 +43,8 @@ export function useCancelSession() {
   return useMutation({
     mutationFn: (sessionId: string) => cancelSession(sessionId),
     onSuccess: (data) => {
-      qc.invalidateQueries({ queryKey: ['sessions'] });
-      qc.invalidateQueries({ queryKey: ['session', data.id] });
+      qc.invalidateQueries({ queryKey: ["sessions"] });
+      qc.invalidateQueries({ queryKey: ["session", data.id] });
     },
   });
 }

@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function Error({
   error,
@@ -27,7 +27,11 @@ export default function Error({
             <Button variant="outline" size="sm" onClick={reset}>
               다시 시도
             </Button>
-            <Button variant="ghost" size="sm" onClick={() => (window.location.href = '/')}>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => (window.location.href = "/")}
+            >
               홈으로
             </Button>
           </div>

@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import Link from "next/link";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -10,23 +10,32 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { PriorityBadge } from '@/components/status-badge';
-import { useQueue } from '@/lib/hooks/use-queue';
+} from "@/components/ui/table";
+import { PriorityBadge } from "@/components/status-badge";
+import { useQueue } from "@/lib/hooks/use-queue";
 
-const STATE_LABEL: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
-  queued: { label: '대기', variant: 'secondary' },
-  preparing: { label: '준비중', variant: 'outline' },
-  running: { label: '실행중', variant: 'default' },
-  post_processing: { label: '후처리', variant: 'outline' },
+const STATE_LABEL: Record<
+  string,
+  {
+    label: string;
+    variant: "default" | "secondary" | "destructive" | "outline";
+  }
+> = {
+  queued: { label: "대기", variant: "secondary" },
+  preparing: { label: "준비중", variant: "outline" },
+  running: { label: "실행중", variant: "default" },
+  post_processing: { label: "후처리", variant: "outline" },
 };
 
 export default function QueuePage() {
   const { data: sessions, isLoading } = useQueue();
 
-  const running = sessions?.filter((s) => s.state === 'running') ?? [];
-  const pending = sessions?.filter((s) => s.state === 'queued' || s.state === 'preparing') ?? [];
-  const postProcessing = sessions?.filter((s) => s.state === 'post_processing') ?? [];
+  const running = sessions?.filter((s) => s.state === "running") ?? [];
+  const pending =
+    sessions?.filter((s) => s.state === "queued" || s.state === "preparing") ??
+    [];
+  const postProcessing =
+    sessions?.filter((s) => s.state === "post_processing") ?? [];
 
   return (
     <div className="mx-auto max-w-5xl p-6 space-y-6">
@@ -38,7 +47,9 @@ export default function QueuePage() {
       <div className="grid grid-cols-3 gap-4">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">실행중</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              실행중
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold">{running.length}</p>
@@ -46,7 +57,9 @@ export default function QueuePage() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">대기중</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              대기중
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold">{pending.length}</p>
@@ -54,7 +67,9 @@ export default function QueuePage() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">후처리</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              후처리
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold">{postProcessing.length}</p>
@@ -64,13 +79,17 @@ export default function QueuePage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-sm font-medium text-muted-foreground">큐 목록</CardTitle>
+          <CardTitle className="text-sm font-medium text-muted-foreground">
+            큐 목록
+          </CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading ? (
             <p className="text-muted-foreground text-sm">로딩 중...</p>
           ) : !sessions?.length ? (
-            <p className="text-muted-foreground text-sm">큐에 세션이 없습니다.</p>
+            <p className="text-muted-foreground text-sm">
+              큐에 세션이 없습니다.
+            </p>
           ) : (
             <Table>
               <TableHeader>
@@ -85,23 +104,33 @@ export default function QueuePage() {
               </TableHeader>
               <TableBody>
                 {sessions.map((s) => {
-                  const stateConfig = STATE_LABEL[s.state] ?? { label: s.state, variant: 'outline' as const };
+                  const stateConfig = STATE_LABEL[s.state] ?? {
+                    label: s.state,
+                    variant: "outline" as const,
+                  };
                   return (
                     <TableRow key={s.id}>
                       <TableCell>
-                        <Link href={`/sessions/${s.id}`} className="font-mono text-xs hover:underline">
+                        <Link
+                          href={`/sessions/${s.id}`}
+                          className="font-mono text-xs hover:underline"
+                        >
                           {s.id.slice(0, 8)}
                         </Link>
                       </TableCell>
                       <TableCell>
-                        <Badge variant={stateConfig.variant}>{stateConfig.label}</Badge>
+                        <Badge variant={stateConfig.variant}>
+                          {stateConfig.label}
+                        </Badge>
                       </TableCell>
                       <TableCell>
                         <PriorityBadge priority={s.priority} />
                       </TableCell>
-                      <TableCell className="text-xs">{s.model_version}</TableCell>
                       <TableCell className="text-xs">
-                        {new Date(s.started_at).toLocaleString('ko-KR')}
+                        {s.model_version}
+                      </TableCell>
+                      <TableCell className="text-xs">
+                        {new Date(s.started_at).toLocaleString("ko-KR")}
                       </TableCell>
                       <TableCell className="text-xs tabular-nums">
                         {s.token_usage.toLocaleString()}

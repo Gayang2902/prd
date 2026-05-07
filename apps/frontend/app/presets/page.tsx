@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { usePresets, useDeletePreset } from '@/lib/hooks/use-presets';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import Link from "next/link";
+import { usePresets, useDeletePreset } from "@/lib/hooks/use-presets";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -12,7 +12,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from "@/components/ui/table";
 
 export default function PresetsPage() {
   const { data: presets, isLoading } = usePresets();
@@ -30,7 +30,10 @@ export default function PresetsPage() {
     <div className="mx-auto max-w-5xl p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <Link href="/projects" className="text-sm text-muted-foreground hover:underline">
+          <Link
+            href="/projects"
+            className="text-sm text-muted-foreground hover:underline"
+          >
             &larr; 프로젝트 목록
           </Link>
           <h1 className="text-2xl font-bold mt-1">프리셋 관리</h1>
@@ -53,9 +56,12 @@ export default function PresetsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {(!presets || presets.length === 0) ? (
+              {!presets || presets.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                  <TableCell
+                    colSpan={5}
+                    className="text-center text-muted-foreground py-8"
+                  >
                     프리셋이 없습니다.
                   </TableCell>
                 </TableRow>
@@ -63,15 +69,18 @@ export default function PresetsPage() {
                 presets.map((p) => (
                   <TableRow key={p.id}>
                     <TableCell>
-                      <Link href={`/presets/${p.id}`} className="font-medium hover:underline">
+                      <Link
+                        href={`/presets/${p.id}`}
+                        className="font-medium hover:underline"
+                      >
                         {p.name}
                       </Link>
                     </TableCell>
                     <TableCell>{p.timeout_seconds}s</TableCell>
                     <TableCell>{p.max_retries}회</TableCell>
                     <TableCell>
-                      <Badge variant={p.is_shared ? 'default' : 'outline'}>
-                        {p.is_shared ? '공유' : '개인'}
+                      <Badge variant={p.is_shared ? "default" : "outline"}>
+                        {p.is_shared ? "공유" : "개인"}
                       </Badge>
                     </TableCell>
                     <TableCell>
@@ -103,7 +112,7 @@ export default function PresetsPage() {
             <div>
               <span className="text-muted-foreground">프롬프트 템플릿</span>
               <p className="mt-1 rounded bg-muted p-3 font-mono text-xs whitespace-pre-wrap">
-                {presets[0].prompt_template || '(없음)'}
+                {presets[0].prompt_template || "(없음)"}
               </p>
             </div>
             <div>

@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 export default function IntegrationsPage() {
   return (
@@ -10,7 +10,9 @@ export default function IntegrationsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-sm font-medium text-muted-foreground">GitLab 연동</CardTitle>
+          <CardTitle className="text-sm font-medium text-muted-foreground">
+            GitLab 연동
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="flex items-center justify-between">
@@ -25,7 +27,9 @@ export default function IntegrationsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-sm font-medium text-muted-foreground">알림 채널</CardTitle>
+          <CardTitle className="text-sm font-medium text-muted-foreground">
+            알림 채널
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="flex items-center justify-between">
@@ -44,7 +48,9 @@ export default function IntegrationsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-sm font-medium text-muted-foreground">에이전트</CardTitle>
+          <CardTitle className="text-sm font-medium text-muted-foreground">
+            에이전트
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="flex items-center justify-between">

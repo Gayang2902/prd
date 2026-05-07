@@ -1,4 +1,4 @@
-import { apiFetch } from './client';
+import { apiFetch } from "./client";
 
 export interface RegressionSummary {
   session_id: string;
@@ -10,6 +10,10 @@ export interface RegressionSummary {
   total: number;
 }
 
-export function fetchRegressionHistory(projectId: string): Promise<RegressionSummary[]> {
-  return apiFetch<RegressionSummary[]>(`/projects/${projectId}/regression-history`);
+export function fetchRegressionHistory(
+  projectId: string,
+): Promise<RegressionSummary[]> {
+  return apiFetch<RegressionSummary[]>(
+    `/projects/${projectId}/regression-history`,
+  );
 }

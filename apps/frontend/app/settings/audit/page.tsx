@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -8,8 +8,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { useAuditLogs } from '@/lib/hooks/use-audit';
+} from "@/components/ui/table";
+import { useAuditLogs } from "@/lib/hooks/use-audit";
 
 export default function AuditPage() {
   const { data: logs, isLoading } = useAuditLogs({ limit: 100 });
@@ -20,7 +20,9 @@ export default function AuditPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-sm font-medium text-muted-foreground">최근 활동</CardTitle>
+          <CardTitle className="text-sm font-medium text-muted-foreground">
+            최근 활동
+          </CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -42,17 +44,17 @@ export default function AuditPage() {
                 {logs.map((log) => (
                   <TableRow key={log.id}>
                     <TableCell className="text-xs">
-                      {new Date(log.created_at).toLocaleString('ko-KR')}
+                      {new Date(log.created_at).toLocaleString("ko-KR")}
                     </TableCell>
                     <TableCell className="font-mono text-xs">
-                      {log.user_id?.slice(0, 8) ?? '—'}
+                      {log.user_id?.slice(0, 8) ?? "—"}
                     </TableCell>
                     <TableCell className="text-xs">{log.action}</TableCell>
                     <TableCell className="text-xs">
                       {log.resource_type}/{log.resource_id.slice(0, 8)}
                     </TableCell>
                     <TableCell className="text-xs text-muted-foreground max-w-[200px] truncate">
-                      {log.detail ?? '—'}
+                      {log.detail ?? "—"}
                     </TableCell>
                   </TableRow>
                 ))}

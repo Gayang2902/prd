@@ -1,27 +1,27 @@
-'use client';
+"use client";
 
-import { useRouter } from 'next/navigation';
-import { useState, type FormEvent } from 'react';
-import { useCreateProject } from '@/lib/hooks/use-projects';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { useRouter } from "next/navigation";
+import { useState, type FormEvent } from "react";
+import { useCreateProject } from "@/lib/hooks/use-projects";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 
 export default function NewProjectPage() {
   const router = useRouter();
   const createProject = useCreateProject();
-  const [name, setName] = useState('');
-  const [gitlabId, setGitlabId] = useState('');
-  const [priority, setPriority] = useState('normal');
-  const [deadline, setDeadline] = useState('');
+  const [name, setName] = useState("");
+  const [gitlabId, setGitlabId] = useState("");
+  const [priority, setPriority] = useState("normal");
+  const [deadline, setDeadline] = useState("");
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -31,7 +31,7 @@ export default function NewProjectPage() {
       priority,
       deadline: deadline || null,
     });
-    router.push('/projects');
+    router.push("/projects");
   };
 
   return (
@@ -63,7 +63,10 @@ export default function NewProjectPage() {
             </div>
             <div className="space-y-2">
               <Label>우선순위</Label>
-              <Select value={priority} onValueChange={(v) => setPriority(v ?? 'normal')}>
+              <Select
+                value={priority}
+                onValueChange={(v) => setPriority(v ?? "normal")}
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -86,9 +89,13 @@ export default function NewProjectPage() {
             </div>
             <div className="flex gap-2">
               <Button type="submit" disabled={createProject.isPending}>
-                {createProject.isPending ? '등록 중...' : '등록'}
+                {createProject.isPending ? "등록 중..." : "등록"}
               </Button>
-              <Button type="button" variant="outline" onClick={() => router.back()}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => router.back()}
+              >
                 취소
               </Button>
             </div>

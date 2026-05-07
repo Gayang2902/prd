@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useState, type FormEvent } from 'react';
-import { useComments, useCreateComment } from '@/lib/hooks/use-comments';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { useState, type FormEvent } from "react";
+import { useComments, useCreateComment } from "@/lib/hooks/use-comments";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 interface Props {
   findingId: string | null;
@@ -12,7 +12,7 @@ interface Props {
 export function CommentList({ findingId }: Props) {
   const { data: comments } = useComments(findingId);
   const createComment = useCreateComment(findingId);
-  const [content, setContent] = useState('');
+  const [content, setContent] = useState("");
 
   if (!findingId) return null;
 
@@ -20,15 +20,17 @@ export function CommentList({ findingId }: Props) {
     e.preventDefault();
     if (!content.trim()) return;
     await createComment.mutateAsync(content.trim());
-    setContent('');
+    setContent("");
   };
 
   return (
     <div className="space-y-3">
-      <h4 className="text-xs font-semibold text-muted-foreground uppercase">코멘트</h4>
+      <h4 className="text-xs font-semibold text-muted-foreground uppercase">
+        코멘트
+      </h4>
 
       <div className="space-y-2 max-h-40 overflow-y-auto">
-        {(!comments || comments.length === 0) ? (
+        {!comments || comments.length === 0 ? (
           <p className="text-xs text-muted-foreground">코멘트 없음</p>
         ) : (
           comments.map((c) => (
@@ -38,7 +40,7 @@ export function CommentList({ findingId }: Props) {
                   {c.author_id.slice(0, 8)}
                 </span>
                 <span className="text-xs text-muted-foreground">
-                  {new Date(c.created_at).toLocaleString('ko-KR')}
+                  {new Date(c.created_at).toLocaleString("ko-KR")}
                 </span>
               </div>
               <p className="text-sm">{c.content}</p>
@@ -54,7 +56,11 @@ export function CommentList({ findingId }: Props) {
           placeholder="코멘트 작성..."
           className="text-sm"
         />
-        <Button type="submit" size="sm" disabled={createComment.isPending || !content.trim()}>
+        <Button
+          type="submit"
+          size="sm"
+          disabled={createComment.isPending || !content.trim()}
+        >
           등록
         </Button>
       </form>

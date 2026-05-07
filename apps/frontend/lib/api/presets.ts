@@ -1,4 +1,4 @@
-import { apiFetch } from './client';
+import { apiFetch } from "./client";
 
 export interface Preset {
   id: string;
@@ -35,7 +35,7 @@ export interface PresetUpdate {
 }
 
 export function fetchPresets(agentId?: string): Promise<Preset[]> {
-  const qs = agentId ? `?agent_id=${agentId}` : '';
+  const qs = agentId ? `?agent_id=${agentId}` : "";
   return apiFetch<Preset[]>(`/presets${qs}`);
 }
 
@@ -44,19 +44,22 @@ export function fetchPreset(presetId: string): Promise<Preset> {
 }
 
 export function createPreset(data: PresetCreate): Promise<Preset> {
-  return apiFetch<Preset>('/presets', {
-    method: 'POST',
+  return apiFetch<Preset>("/presets", {
+    method: "POST",
     body: JSON.stringify(data),
   });
 }
 
-export function updatePreset(presetId: string, data: PresetUpdate): Promise<Preset> {
+export function updatePreset(
+  presetId: string,
+  data: PresetUpdate,
+): Promise<Preset> {
   return apiFetch<Preset>(`/presets/${presetId}`, {
-    method: 'PATCH',
+    method: "PATCH",
     body: JSON.stringify(data),
   });
 }
 
 export function deletePreset(presetId: string): Promise<void> {
-  return apiFetch(`/presets/${presetId}`, { method: 'DELETE' });
+  return apiFetch(`/presets/${presetId}`, { method: "DELETE" });
 }
