@@ -80,7 +80,7 @@ Sprint 8 (Polish + GA prep) ───── GA
 ### Infra
 - [x] **IN-01**: GitHub Actions CI 파이프라인 (lint, test, build) | §C.9 | M | main push 시 그린
 - [x] **IN-02**: K8s dev 네임스페이스 + 기본 NetworkPolicy | §C.6 | M | dev 클러스터에 backend Pod 배포 성공
-- [ ] **IN-03**: Vault dev 인스턴스 + ExternalSecrets Operator | §C.7 | M | API 키 1건을 Vault → Pod env로 주입 검증
+- [x] **IN-03**: Vault dev 인스턴스 + ExternalSecrets Operator | §C.7 | M | API 키 1건을 Vault → Pod env로 주입 검증
 - [x] **IN-04**: Temporal dev 클러스터 (또는 매니지드) 셋업 | §C.5 | M | hello-world workflow 1건 동작
 
 ### Discovery (병행)
@@ -146,7 +146,7 @@ Sprint 8 (Polish + GA prep) ───── GA
 - [x] **FE-10**: 회차 진행 화면 (SSE 로그 스트림 표시) | F3-3 | M
 
 ### Infra
-- [ ] **IN-08**: GitLab API 자격증명 Vault 저장 + 백엔드 주입 | §C.7 | S
+- [x] **IN-08**: GitLab API 자격증명 Vault 저장 + 백엔드 주입 | §C.7 | S
 - [x] **IN-09**: 격리 환경 베이스 컨테이너 이미지 (Python + git + 에이전트 의존성) | §C.6 | M
 
 ### Acceptance demo
@@ -199,7 +199,7 @@ Sprint 8 (Polish + GA prep) ───── GA
 - [x] **FE-17**: 프리셋 관리 페이지 (목록 + 편집) | F3-2 | M
 
 ### Infra
-- [ ] **IN-13**: LLM API 키 (Anthropic, OpenAI) Vault 저장 + Pod 주입 | §C.7 | S
+- [x] **IN-13**: LLM API 키 (Anthropic, OpenAI) Vault 저장 + Pod 주입 | §C.7 | S
 - [x] **IN-14**: 격리 Pod 리소스 한도 (CPU, mem, runtime) 정책 | §C.6 | S
 
 ### Acceptance demo
@@ -274,8 +274,8 @@ Sprint 8 (Polish + GA prep) ───── GA
 - [x] **FE-29**: 설정 — GitLab 연동, 에이전트/프리셋 페이지 | §F7 | M
 
 ### Infra
-- [ ] **IN-17**: 알림 채널 시크릿 (Slack 웹훅, SMTP) Vault 저장 | S
-- [ ] **IN-18**: 백업 정책 (DB 일일 스냅샷, 보존 30일) | M
+- [x] **IN-17**: 알림 채널 시크릿 (Slack 웹훅, SMTP) Vault 저장 | S
+- [x] **IN-18**: 백업 정책 (DB 일일 스냅샷, 보존 30일) | M
 - [ ] **IN-19**: prod 클러스터 셋업 + 인프라 코드 정리 (Terraform + Helm) | §C.9 | L
 
 ### Acceptance demo (**Beta**)

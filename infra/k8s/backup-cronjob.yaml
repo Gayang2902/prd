@@ -1,0 +1,55 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: postgres-backup
+  namespace: securescope-dev
+spec:
+  schedule: "0 3 * * *"
+  successfulJobsHistoryLimit: 7
+  failedJobsHistoryLimit: 3
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      activeDeadlineSeconds: 1800
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: pg-backup
+              image: postgres:16-alpine
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+                  FILENAME="securescope_${TIMESTAMP}.sql.gz"
+                  pg_dump "$DATABASE_URL" | gzip > "/backups/${FILENAME}"
+                  # retain last 30 days
+                  find /backups -name "securescope_*.sql.gz" -mtime +30 -delete
+                  echo "Backup complete: ${FILENAME}"
+              env:
+                - name: DATABASE_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: securescope-secrets
+                      key: database-url
+              volumeMounts:
+                - name: backup-volume
+                  mountPath: /backups
+          volumes:
+            - name: backup-volume
+              persistentVolumeClaim:
+                claimName: postgres-backup-pvc
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-backup-pvc
+  namespace: securescope-dev
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
