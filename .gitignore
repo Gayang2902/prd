@@ -8,7 +8,8 @@ Thumbs.db
 *.swp
 *.swo
 
-# OMC
+# Claude / OMC
+.claude/
 .omc/
 
 # Python
