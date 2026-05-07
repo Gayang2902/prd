@@ -5,11 +5,11 @@ from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.auth import CurrentUser
 from app.core.database import get_session
 from app.models.analysis_session import AnalysisSession
 from app.models.finding import Finding, RegressionStatus
 from app.models.project import ProjectStatus
-from app.models.user import User
 from app.schemas.project import ProjectCreate, ProjectRead, ProjectUpdate
 from app.services.repositories.project import ProjectRepository
 
@@ -44,13 +44,10 @@ async def list_projects(
 @router.post("", response_model=ProjectRead, status_code=status.HTTP_201_CREATED)
 async def create_project(
     payload: ProjectCreate,
+    user: CurrentUser,
     repo: ProjectRepository = Depends(_get_repo),
     session: AsyncSession = Depends(get_session),
 ) -> ProjectRead:
-    # TODO: owner_id를 SSO 인증 사용자로 교체 (BE-04 완료 후)
-    user = (await session.execute(select(User).limit(1))).scalar_one_or_none()
-    if user is None:
-        raise HTTPException(status_code=400, detail="No users exist yet")
     project = await repo.create(payload, owner_id=user.id)
     await session.commit()
     return ProjectRead.model_validate(project)

@@ -194,12 +194,7 @@ def test_create_project() -> None:
     mock_repo.create.return_value = proj
     app.dependency_overrides[_get_repo] = lambda: mock_repo
 
-    mock_user = _mock_user()
-    mock_db, _ = _setup_overrides(mock_user)
-
-    result = MagicMock()
-    result.scalar_one_or_none.return_value = mock_user
-    mock_db.execute = AsyncMock(return_value=result)
+    mock_db, _ = _setup_overrides()
     mock_db.commit = AsyncMock()
 
     client = TestClient(app, raise_server_exceptions=False)
@@ -208,27 +203,6 @@ def test_create_project() -> None:
         json={"name": "New", "gitlab_project_id": "gl-1"},
     )
     assert resp.status_code == 201
-    _cleanup()
-
-
-def test_create_project_no_users() -> None:
-    from app.api.v1.projects import _get_repo
-
-    mock_repo = AsyncMock()
-    app.dependency_overrides[_get_repo] = lambda: mock_repo
-
-    mock_db, _ = _setup_overrides()
-
-    result = MagicMock()
-    result.scalar_one_or_none.return_value = None
-    mock_db.execute = AsyncMock(return_value=result)
-
-    client = TestClient(app, raise_server_exceptions=False)
-    resp = client.post(
-        "/api/v1/projects",
-        json={"name": "New", "gitlab_project_id": "gl-1"},
-    )
-    assert resp.status_code == 400
     _cleanup()
 
 
