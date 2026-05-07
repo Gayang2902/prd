@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     cors_origins: list[str] = ["http://localhost:3000", "http://localhost:3001"]
 
     finding_mcp_cmd: str = "finding-mcp"
+    claude_cmd: str = "claude"
 
     jwt_secret: str = "change-me-in-production"
     jwt_algorithm: str = "HS256"
