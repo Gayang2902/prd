@@ -11,6 +11,8 @@ class Settings(BaseSettings):
     redis_url: str = "redis://localhost:6379/0"
     temporal_host: str = "localhost:7233"
 
+    cors_origins: list[str] = ["http://localhost:3000", "http://localhost:3001"]
+
     jwt_secret: str = "change-me-in-production"
     jwt_algorithm: str = "HS256"
     jwt_expire_minutes: int = 60
