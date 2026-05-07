@@ -71,7 +71,7 @@ async def _subscribe_loop(session_id: str) -> None:
         pass
     finally:
         await pubsub.unsubscribe(_channel(session_id))
-        await pubsub.aclose()
+        await pubsub.aclose()  # type: ignore[no-untyped-call]
 
 
 def _ensure_subscriber(session_id: str) -> None:

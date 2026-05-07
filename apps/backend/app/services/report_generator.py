@@ -86,7 +86,8 @@ def _to_pdf(findings: list[Finding], session_id: uuid.UUID) -> bytes:
     markdown_text = _to_markdown(findings, session_id)
     html_body = md.markdown(markdown_text, extensions=["fenced_code", "tables"])
     full_html = f"<html><head><style>{_PDF_CSS}</style></head><body>{html_body}</body></html>"
-    return HTML(string=full_html).write_pdf()
+    result: bytes = HTML(string=full_html).write_pdf()
+    return result
 
 
 def _to_csv(findings: list[Finding]) -> str:
