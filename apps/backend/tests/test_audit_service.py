@@ -1,7 +1,7 @@
 """Tests for audit service functions."""
 
 import uuid
-from unittest.mock import AsyncMock, MagicMock, call
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -13,7 +13,7 @@ async def test_record_audit() -> None:
     db = AsyncMock()
     db.flush = AsyncMock()
 
-    log = await record_audit(
+    await record_audit(
         db,
         user_id=uuid.uuid4(),
         action="login",
@@ -31,7 +31,7 @@ async def test_record_audit_minimal() -> None:
     db = AsyncMock()
     db.flush = AsyncMock()
 
-    log = await record_audit(
+    await record_audit(
         db,
         user_id=None,
         action="system_event",

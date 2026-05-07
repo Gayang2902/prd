@@ -3,7 +3,6 @@
 import uuid
 from contextlib import asynccontextmanager
 from datetime import datetime
-from decimal import Decimal
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -22,7 +21,6 @@ from app.workflows.activities import (
     ResourceLimitExceededError,
     cleanup_isolated_env,
     clone_repository,
-    post_process_findings,
     provision_isolated_env,
     record_session_state,
     run_agent,
@@ -109,7 +107,11 @@ async def test_run_agent_happy_path(mock_activity: MagicMock) -> None:
 
     async def fake_analyze(_ctx: object):  # noqa: ANN202
         yield LogEvent(
-            timestamp=datetime.now(), level=LogLevel.INFO, message="step", progress=0.5, tokens_used=50
+            timestamp=datetime.now(),
+            level=LogLevel.INFO,
+            message="step",
+            progress=0.5,
+            tokens_used=50,
         )
         yield findings_result
 

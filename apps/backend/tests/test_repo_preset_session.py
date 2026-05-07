@@ -8,9 +8,9 @@ import pytest
 from app.models.analysis_session import SessionPriority, SessionState
 from app.services.repositories.preset import PresetRepository
 from app.services.repositories.session import (
+    VALID_TRANSITIONS,
     InvalidStateTransitionError,
     SessionRepository,
-    VALID_TRANSITIONS,
 )
 
 
