@@ -1,0 +1,106 @@
+from uuid import UUID
+
+import structlog
+from temporalio import activity
+
+from app.models.analysis_session import SessionState
+from app.workflows.models import EnvHandle
+from securescope_schemas.agent_interface import AnalysisContext, AnalysisResult, CodeScope, LogEvent
+
+logger = structlog.get_logger()
+
+
+@activity.defn(name="provision_isolated_env")
+async def provision_isolated_env(session_id: UUID) -> EnvHandle:
+    from app.services.k8s import create_analysis_pod
+
+    activity.logger.info("Provisioning isolated env", extra={"session_id": str(session_id)})
+    return await create_analysis_pod(session_id)
+
+
+@activity.defn(name="clone_repository")
+async def clone_repository(env: EnvHandle, scope: CodeScope) -> None:
+    activity.logger.info(
+        "Cloning repository",
+        extra={"repo_path": scope.repo_path, "commit": scope.commit_sha},
+    )
+
+
+@activity.defn(name="run_agent")
+async def run_agent(env: EnvHandle, ctx: AnalysisContext) -> AnalysisResult:
+    from app.services.agent_registry import get_registry
+
+    registry = get_registry()
+    agent_cls = next(iter(registry.values()), None)
+    if agent_cls is None:
+        raise RuntimeError("No agents registered")
+
+    agent = agent_cls()
+    await agent.prepare(ctx)
+
+    result: AnalysisResult | None = None
+    async for event in agent.analyze(ctx):
+        if isinstance(event, LogEvent):
+            activity.heartbeat({"progress": event.progress, "tokens_used": event.tokens_used})
+        elif isinstance(event, AnalysisResult):
+            result = event
+
+    if result is None:
+        raise RuntimeError("Agent did not produce a result")
+
+    await agent.terminate()
+    return result
+
+
+@activity.defn(name="post_process_findings")
+async def post_process_findings(session_id: UUID, result: AnalysisResult) -> int:
+    from app.core.database import async_session_factory
+    from app.models.finding import Finding, RegressionStatus, Severity
+    from app.services.fingerprint import compute_fingerprint
+
+    count = 0
+    async with async_session_factory() as session:
+        for af in result.findings:
+            fp = compute_fingerprint(af.file_path, af.code_snippet, af.category)
+            finding = Finding(
+                session_id=session_id,
+                fingerprint=fp,
+                file_path=af.file_path,
+                line_start=af.line_start,
+                line_end=af.line_end,
+                severity=Severity(af.severity.value),
+                category=af.category,
+                title=af.title,
+                description=af.description,
+                regression_status=RegressionStatus.NEW,
+            )
+            session.add(finding)
+            count += 1
+        await session.commit()
+
+    activity.logger.info("Saved findings", extra={"count": count})
+    return count
+
+
+@activity.defn(name="cleanup_isolated_env")
+async def cleanup_isolated_env(env: EnvHandle) -> None:
+    from app.services.k8s import delete_analysis_pod
+
+    activity.logger.info("Cleaning up env", extra={"pod_name": env.pod_name})
+    await delete_analysis_pod(env)
+
+
+@activity.defn(name="record_session_state")
+async def record_session_state(session_id: UUID, state: SessionState) -> None:
+    from app.core.database import async_session_factory
+    from app.services.repositories.session import SessionRepository
+
+    async with async_session_factory() as session:
+        repo = SessionRepository(session)
+        analysis = await repo.get(session_id)
+        if analysis is None:
+            raise RuntimeError(f"Session {session_id} not found")
+        await repo.transition(analysis, state)
+        await session.commit()
+
+    activity.logger.info("Session state updated", extra={"state": state.value})
