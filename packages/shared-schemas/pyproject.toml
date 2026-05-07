@@ -1,0 +1,15 @@
+[project]
+name = "securescope-schemas"
+version = "0.1.0"
+description = "SecureScope 공유 스키마 및 에이전트 인터페이스"
+requires-python = ">=3.11"
+dependencies = [
+    "pydantic>=2.10.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["securescope_schemas"]

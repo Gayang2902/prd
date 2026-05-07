@@ -1,0 +1,19 @@
+[project]
+name = "securescope-agent-mock"
+version = "0.1.0"
+description = "Mock agent for SecureScope testing"
+requires-python = ">=3.11"
+dependencies = [
+    "securescope-schemas",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["."]
+only-include = ["agent.py", "__init__.py"]
+
+[project.entry-points."securescope.agents"]
+mock = "agent:MockAgent"
