@@ -7,6 +7,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from securescope_schemas.agent_interface import (
+    AgentFinding,
     AnalysisContext,
     AnalysisResult,
     CodeScope,
@@ -15,12 +16,16 @@ from securescope_schemas.agent_interface import (
     PresetConfig,
     ResourceLimits,
 )
+from securescope_schemas.agent_interface import (
+    Severity as SharedSeverity,
+)
 
 from app.models.analysis_session import SessionState
 from app.workflows.activities import (
     ResourceLimitExceededError,
     cleanup_isolated_env,
     clone_repository,
+    post_process_findings,
     provision_isolated_env,
     record_session_state,
     run_agent,
@@ -281,3 +286,114 @@ async def test_record_session_state_not_found(mock_activity: MagicMock) -> None:
         pytest.raises(RuntimeError, match="not found"),
     ):
         await record_session_state(uuid.uuid4(), SessionState.FAILED)
+
+
+def _agent_finding(**overrides: object) -> AgentFinding:
+    defaults: dict = {
+        "fingerprint": "fp1",
+        "file_path": "src/main.py",
+        "line_start": 10,
+        "line_end": 15,
+        "severity": SharedSeverity.HIGH,
+        "category": "xss",
+        "title": "XSS vuln",
+        "description": "Reflected XSS",
+        "code_snippet": "print(user_input)",
+        "confidence": 0.9,
+    }
+    defaults.update(overrides)
+    return AgentFinding(**defaults)
+
+
+@pytest.mark.asyncio
+@patch("app.workflows.activities.activity")
+async def test_post_process_findings_with_findings(mock_activity: MagicMock) -> None:
+    sid = uuid.uuid4()
+    pid = uuid.uuid4()
+    result = AnalysisResult(
+        findings=[_agent_finding(), _agent_finding(file_path="src/utils.py")],
+        tokens_used=500,
+        cost_usd=2.5,
+        raw_output="done",
+    )
+
+    mock_analysis = MagicMock()
+    mock_analysis.project_id = pid
+
+    mock_db = AsyncMock()
+    mock_db.add = MagicMock()
+    mock_db.get = AsyncMock(return_value=mock_analysis)
+    mock_db.flush = AsyncMock()
+    mock_db.commit = AsyncMock()
+
+    @asynccontextmanager
+    async def fake_factory():  # noqa: ANN202
+        yield mock_db
+
+    mock_regression = AsyncMock()
+
+    with (
+        patch("app.core.database.async_session_factory", fake_factory),
+        patch("app.services.fingerprint.compute_fingerprint", return_value="fp-hash"),
+        patch("app.services.regression.compute_regression_labels", mock_regression),
+    ):
+        count = await post_process_findings(sid, result)
+
+    assert count == 2
+    assert mock_db.add.call_count == 2
+    mock_db.flush.assert_awaited_once()
+    mock_db.commit.assert_awaited_once()
+    mock_regression.assert_awaited_once_with(mock_db, sid, pid)
+
+
+@pytest.mark.asyncio
+@patch("app.workflows.activities.activity")
+async def test_post_process_findings_no_analysis(mock_activity: MagicMock) -> None:
+    sid = uuid.uuid4()
+    result = AnalysisResult(
+        findings=[_agent_finding()],
+        tokens_used=100,
+        cost_usd=1.0,
+        raw_output="ok",
+    )
+
+    mock_db = AsyncMock()
+    mock_db.add = MagicMock()
+    mock_db.get = AsyncMock(return_value=None)
+    mock_db.flush = AsyncMock()
+    mock_db.commit = AsyncMock()
+
+    @asynccontextmanager
+    async def fake_factory():  # noqa: ANN202
+        yield mock_db
+
+    with (
+        patch("app.core.database.async_session_factory", fake_factory),
+        patch("app.services.fingerprint.compute_fingerprint", return_value="fp-hash"),
+    ):
+        count = await post_process_findings(sid, result)
+
+    assert count == 1
+    mock_db.commit.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+@patch("app.workflows.activities.activity")
+async def test_post_process_findings_empty(mock_activity: MagicMock) -> None:
+    sid = uuid.uuid4()
+    result = AnalysisResult(findings=[], tokens_used=0, cost_usd=0.0, raw_output="empty")
+
+    mock_db = AsyncMock()
+    mock_db.add = MagicMock()
+    mock_db.get = AsyncMock(return_value=None)
+    mock_db.flush = AsyncMock()
+    mock_db.commit = AsyncMock()
+
+    @asynccontextmanager
+    async def fake_factory():  # noqa: ANN202
+        yield mock_db
+
+    with patch("app.core.database.async_session_factory", fake_factory):
+        count = await post_process_findings(sid, result)
+
+    assert count == 0
