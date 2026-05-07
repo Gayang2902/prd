@@ -1,0 +1,62 @@
+namespace: securescope
+
+backend:
+  image: securescope-backend
+  tag: latest
+  replicas: 2
+  port: 8000
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: "1"
+      memory: 2Gi
+
+frontend:
+  image: securescope-frontend
+  tag: latest
+  replicas: 2
+  port: 3000
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 1Gi
+
+temporalWorker:
+  replicas: 2
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: "1"
+      memory: 2Gi
+
+postgres:
+  host: ""
+  port: 5432
+  database: securescope
+  existingSecret: securescope-secrets
+  secretKey: database-url
+
+redis:
+  host: ""
+  port: 6379
+  existingSecret: securescope-secrets
+  secretKey: redis-url
+
+temporal:
+  host: temporal
+  port: 7233
+
+ingress:
+  enabled: true
+  className: nginx
+  host: securescope.internal
+  tls:
+    enabled: true
+    secretName: securescope-tls

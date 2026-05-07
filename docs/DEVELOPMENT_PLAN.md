@@ -116,8 +116,8 @@ Sprint 8 (Polish + GA prep) ───── GA
 - [x] **FE-07**: 디자인 시스템 컴포넌트 (Card, Badge, StatCard, Button, Input) | M
 
 ### Infra
-- [ ] **IN-05**: stage 클러스터 셋업 (dev와 동일 구성) | M
-- [ ] **IN-06**: Postgres 매니지드 인스턴스 (dev/stage) | M
+- [x] **IN-05**: stage 클러스터 셋업 (dev와 동일 구성) | M
+- [x] **IN-06**: Postgres 매니지드 인스턴스 (dev/stage) | M
 - [x] **IN-07**: 모니터링 기본 (Prometheus + Grafana, 헬스 메트릭) | §C.8 | M
 
 ### Discovery
@@ -276,7 +276,7 @@ Sprint 8 (Polish + GA prep) ───── GA
 ### Infra
 - [x] **IN-17**: 알림 채널 시크릿 (Slack 웹훅, SMTP) Vault 저장 | S
 - [x] **IN-18**: 백업 정책 (DB 일일 스냅샷, 보존 30일) | M
-- [ ] **IN-19**: prod 클러스터 셋업 + 인프라 코드 정리 (Terraform + Helm) | §C.9 | L
+- [x] **IN-19**: prod 클러스터 셋업 + 인프라 코드 정리 (Terraform + Helm) | §C.9 | L
 
 ### Acceptance demo (**Beta**)
 - 비용 대시보드에서 한 달 사용 현황 확인 (실제 데이터)
@@ -303,7 +303,7 @@ Sprint 8 (Polish + GA prep) ───── GA
 
 ### Infra
 - [ ] **IN-20**: 운영 룰북 (장애 대응 플레이북, 백업 복구 절차, on-call 로테이션) | L
-- [ ] **IN-21**: SLO/SLA 정의 + 알림 (가용성 99%, P95 응답 < 2s) | §7.4 | M
+- [x] **IN-21**: SLO/SLA 정의 + 알림 (가용성 99%, P95 응답 < 2s) | §7.4 | M
 - [ ] **IN-22**: 다크 런치 — 일부 팀 우선 오픈 + 피드백 루프 | M
 - [ ] **IN-23**: GA 공지 + 사용 가이드 (Notion/Confluence) | M
 

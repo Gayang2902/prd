@@ -1,0 +1,6 @@
+apiVersion: v2
+name: securescope
+description: SecureScope — 사내 코드 정적 분석 대시보드
+version: 0.1.0
+appVersion: "0.1.0"
+type: application

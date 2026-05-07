@@ -1,0 +1,61 @@
+groups:
+  - name: securescope-slo
+    rules:
+      - alert: HighErrorRate
+        expr: |
+          sum(rate(http_requests_total{status=~"5.."}[5m]))
+          / sum(rate(http_requests_total[5m])) > 0.01
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Error rate exceeds 1% SLO"
+          description: "HTTP 5xx error rate is {{ $value | humanizePercentage }} over the last 5 minutes."
+
+      - alert: HighP95Latency
+        expr: |
+          histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le)) > 2
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "P95 latency exceeds 2s SLO"
+          description: "P95 response time is {{ $value | humanizeDuration }}."
+
+      - alert: HighP99Latency
+        expr: |
+          histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[5m])) by (le)) > 5
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "P99 latency exceeds 5s"
+          description: "P99 response time is {{ $value | humanizeDuration }}."
+
+      - alert: ServiceDown
+        expr: up{job="backend"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Backend service is down"
+          description: "Backend instance {{ $labels.instance }} has been down for more than 1 minute."
+
+      - alert: HighMemoryUsage
+        expr: process_resident_memory_bytes{job="backend"} > 1.5e9
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Backend memory usage high"
+          description: "Backend is using {{ $value | humanize1024 }}B of memory."
+
+      - alert: DatabaseConnectionPoolExhausted
+        expr: |
+          sum(rate(http_requests_total{status="503"}[5m])) > 0.1
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Possible DB connection pool exhaustion"
+          description: "Elevated 503 errors may indicate connection pool saturation."
