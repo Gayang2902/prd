@@ -3,6 +3,7 @@ import './globals.css';
 import { Geist } from 'next/font/google';
 import { cn } from '@/lib/utils';
 import { Providers } from '@/components/providers';
+import { OnboardingModal } from '@/components/onboarding-modal';
 
 const geist = Geist({ subsets: ['latin'], variable: '--font-sans' });
 
@@ -15,7 +16,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="ko" className={cn('font-sans', geist.variable)}>
       <body>
-        <Providers>{children}</Providers>
+        <Providers>
+          {children}
+          <OnboardingModal />
+        </Providers>
       </body>
     </html>
   );
