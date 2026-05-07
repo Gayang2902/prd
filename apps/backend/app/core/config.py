@@ -9,6 +9,7 @@ class Settings(BaseSettings):
 
     database_url: str = "postgresql+asyncpg://securescope:localdev@localhost:5432/securescope"
     redis_url: str = "redis://localhost:6379/0"
+    temporal_host: str = "localhost:7233"
 
     jwt_secret: str = "change-me-in-production"
     jwt_algorithm: str = "HS256"
