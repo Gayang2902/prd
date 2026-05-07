@@ -3,9 +3,10 @@
 import Link from 'next/link';
 import { use } from 'react';
 import { useProject } from '@/lib/hooks/use-projects';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatusBadge, PriorityBadge } from '@/components/status-badge';
+import { SessionList } from '@/components/session-list';
+import { NewSessionDialog } from '@/components/new-session-dialog';
 
 export default function ProjectDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -37,43 +38,33 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm font-medium text-muted-foreground">개요</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">GitLab</span>
-              <span className="font-mono">{project.gitlab_project_id}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">마감일</span>
-              <span>{project.deadline ?? '미지정'}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">생성일</span>
-              <span>{new Date(project.created_at).toLocaleDateString('ko-KR')}</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm font-medium text-muted-foreground">분석 회차</CardTitle>
-          </CardHeader>
-          <CardContent className="flex items-center justify-center text-muted-foreground">
-            <p>아직 분석 이력이 없습니다.</p>
-          </CardContent>
-        </Card>
-      </div>
-
       <Card>
         <CardHeader>
-          <CardTitle className="text-sm font-medium text-muted-foreground">액션</CardTitle>
+          <CardTitle className="text-sm font-medium text-muted-foreground">개요</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2 text-sm">
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">GitLab</span>
+            <span className="font-mono">{project.gitlab_project_id}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">마감일</span>
+            <span>{project.deadline ?? '미지정'}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">생성일</span>
+            <span>{new Date(project.created_at).toLocaleDateString('ko-KR')}</span>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="text-sm font-medium text-muted-foreground">분석 회차</CardTitle>
+          <NewSessionDialog projectId={id} />
         </CardHeader>
         <CardContent>
-          <Button disabled>분석 실행 (Sprint 2에서 활성화)</Button>
+          <SessionList projectId={id} />
         </CardContent>
       </Card>
     </div>
