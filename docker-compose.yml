@@ -25,6 +25,7 @@ services:
       DATABASE_URL: postgresql+asyncpg://securescope:localdev@postgres:5432/securescope
       REDIS_URL: redis://redis:6379/0
       TEMPORAL_HOST: temporal:7233
+      CORS_ORIGINS: '["http://localhost:3000"]'
     depends_on:
       - postgres
       - redis
