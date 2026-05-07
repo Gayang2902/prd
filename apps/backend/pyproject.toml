@@ -17,6 +17,7 @@ dependencies = [
     "httpx>=0.28.0",
     "python-multipart>=0.0.18",
     "temporalio>=1.7.0",
+    "mcp>=1.2.0",
 ]
 
 [project.optional-dependencies]
@@ -29,6 +30,9 @@ dev = [
     "ruff>=0.8.0",
     "mypy>=1.13.0",
 ]
+
+[project.entry-points."securescope.agents"]
+mcp-finding = "app.agents.mcp_finding_agent:McpFindingAgent"
 
 [build-system]
 requires = ["hatchling"]
