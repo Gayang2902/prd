@@ -64,11 +64,11 @@ services:
     build:
       context: apps/frontend
       dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:18000/api/v1
+        NEXT_PUBLIC_WS_URL: ws://localhost:18000
     ports:
       - "13000:3000"
-    environment:
-      NEXT_PUBLIC_API_URL: http://localhost:18000/api/v1
-      NEXT_PUBLIC_WS_URL: ws://localhost:18000
     depends_on:
       - backend
     restart: unless-stopped
