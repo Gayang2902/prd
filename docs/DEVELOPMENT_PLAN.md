@@ -226,7 +226,7 @@ Sprint 8 (Polish + GA prep) ───── GA
 
 ### Infra
 - [x] **IN-15**: WebSocket sticky session 또는 sub/pub 백엔드 (Redis) | §C.5 | M
-- [ ] **IN-16**: PDF 생성 인프라 (headless Chromium 또는 wkhtmltopdf) | §B.3 | M
+- [x] **IN-16**: PDF 생성 인프라 (headless Chromium 또는 wkhtmltopdf) | §B.3 | M
 
 ### Acceptance demo (**MVP-β**, 알파 유저 투입)
 - 검수자 2명이 동시 접속 → 같은 회차 검증 → 코멘트 교환 → PDF 리포트 생성 → 개발팀에 공유

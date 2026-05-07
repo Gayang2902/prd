@@ -1,10 +1,14 @@
 """Tests for report generator."""
 
 import json
+import sys
 import uuid
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from app.services.report_generator import generate_report
+
+_mock_weasyprint = MagicMock()
+sys.modules.setdefault("weasyprint", _mock_weasyprint)
 
 
 def _make_finding(**overrides):
@@ -67,6 +71,26 @@ async def test_generate_json(mock_repo_cls: MagicMock) -> None:
     data = json.loads(content)
     assert len(data) == 1
     assert data[0]["severity"] == "high"
+
+
+@patch("app.services.report_generator.FindingRepository")
+async def test_generate_pdf(mock_repo_cls: MagicMock) -> None:
+    findings = [_make_finding()]
+    mock_repo_cls.return_value.list_by_session = AsyncMock(return_value=findings)
+
+    mock_html = MagicMock()
+    mock_html.return_value.write_pdf.return_value = b"%PDF-1.4 fake"
+    _mock_weasyprint.HTML = mock_html
+
+    session = AsyncMock()
+    content, ctype, fname = await generate_report(session, uuid.uuid4(), "pdf")
+
+    assert ctype == "application/pdf"
+    assert fname.endswith(".pdf")
+    assert content == b"%PDF-1.4 fake"
+    mock_html.assert_called_once()
+    call_kwargs = mock_html.call_args
+    assert "SQL Injection" in call_kwargs.kwargs["string"]
 
 
 @patch("app.services.report_generator.FindingRepository")

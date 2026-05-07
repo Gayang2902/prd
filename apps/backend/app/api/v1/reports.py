@@ -15,7 +15,7 @@ router = APIRouter(tags=["reports"])
 async def create_report(
     session_id: uuid.UUID,
     user: CurrentUser,
-    format: str = Query("markdown", pattern="^(markdown|csv|json)$"),
+    format: str = Query("markdown", pattern="^(markdown|csv|json|pdf)$"),
     db: AsyncSession = Depends(get_session),
 ) -> Response:
     content, content_type, filename = await generate_report(db, session_id, format)
