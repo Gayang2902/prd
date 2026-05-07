@@ -79,7 +79,7 @@ Sprint 8 (Polish + GA prep) ───── GA
 
 ### Infra
 - [x] **IN-01**: GitHub Actions CI 파이프라인 (lint, test, build) | §C.9 | M | main push 시 그린
-- [ ] **IN-02**: K8s dev 네임스페이스 + 기본 NetworkPolicy | §C.6 | M | dev 클러스터에 backend Pod 배포 성공
+- [x] **IN-02**: K8s dev 네임스페이스 + 기본 NetworkPolicy | §C.6 | M | dev 클러스터에 backend Pod 배포 성공
 - [ ] **IN-03**: Vault dev 인스턴스 + ExternalSecrets Operator | §C.7 | M | API 키 1건을 Vault → Pod env로 주입 검증
 - [x] **IN-04**: Temporal dev 클러스터 (또는 매니지드) 셋업 | §C.5 | M | hello-world workflow 1건 동작
 
@@ -147,7 +147,7 @@ Sprint 8 (Polish + GA prep) ───── GA
 
 ### Infra
 - [ ] **IN-08**: GitLab API 자격증명 Vault 저장 + 백엔드 주입 | §C.7 | S
-- [ ] **IN-09**: 격리 환경 베이스 컨테이너 이미지 (Python + git + 에이전트 의존성) | §C.6 | M
+- [x] **IN-09**: 격리 환경 베이스 컨테이너 이미지 (Python + git + 에이전트 의존성) | §C.6 | M
 
 ### Acceptance demo
 - 프로젝트 등록 → GitLab 브랜치 선택 → "분석 실행" → MockAgent 결과가 로그 스트림으로 흐름 → 완료 후 회차 #1 표시
@@ -173,9 +173,9 @@ Sprint 8 (Polish + GA prep) ───── GA
 - [x] **FE-14**: 단축키 핸들러 (j/k/c/f/r/e/?) | §D.3 | S
 
 ### Infra
-- [ ] **IN-10**: Temporal 워커 Deployment (분리된 Pool) | §C.5 | M
-- [ ] **IN-11**: K8s Job 실행 권한 (RBAC, ServiceAccount) | §C.6 | M
-- [ ] **IN-12**: 격리 Pod NetworkPolicy 검증 (외부 egress 차단 → 허용 도메인만) | §C.6 | M
+- [x] **IN-10**: Temporal 워커 Deployment (분리된 Pool) | §C.5 | M
+- [x] **IN-11**: K8s Job 실행 권한 (RBAC, ServiceAccount) | §C.6 | M
+- [x] **IN-12**: 격리 Pod NetworkPolicy 검증 (외부 egress 차단 → 허용 도메인만) | §C.6 | M
 
 ### Acceptance demo (**MVP-α**)
 - 분석 실행 버튼 클릭 → 격리 Pod 생성 → MockAgent 실행 → 결과 17건 → 검증 화면에서 코드/취약점 동시 보기 → 검증 액션 부여 → 회차 상태 `완료`
@@ -200,7 +200,7 @@ Sprint 8 (Polish + GA prep) ───── GA
 
 ### Infra
 - [ ] **IN-13**: LLM API 키 (Anthropic, OpenAI) Vault 저장 + Pod 주입 | §C.7 | S
-- [ ] **IN-14**: 격리 Pod 리소스 한도 (CPU, mem, runtime) 정책 | §C.6 | S
+- [x] **IN-14**: 격리 Pod 리소스 한도 (CPU, mem, runtime) 정책 | §C.6 | S
 
 ### Acceptance demo
 - 실제 GitLab 프로젝트의 한 브랜치를 Claude Code로 분석 → 진짜 LLM 호출 발생 → 실제 취약점 검출 → 토큰/비용이 회차 메타에 기록
