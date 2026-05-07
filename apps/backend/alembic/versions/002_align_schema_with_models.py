@@ -42,16 +42,9 @@ def upgrade() -> None:
         "presets", sa.Column("is_shared", sa.Boolean(), nullable=False, server_default="false")
     )
 
-    # ── analysis_sessions: add priority column ──
-    op.add_column(
-        "analysis_sessions",
-        sa.Column("priority", sa.String(20), nullable=False, server_default="normal"),
-    )
 
 
 def downgrade() -> None:
-    op.drop_column("analysis_sessions", "priority")
-
     op.drop_column("presets", "is_shared")
     op.drop_column("presets", "version_sha")
     op.drop_column("presets", "agent_id")
