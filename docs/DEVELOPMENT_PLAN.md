@@ -78,7 +78,7 @@ Sprint 8 (Polish + GA prep) ───── GA
 - [x] **FE-03**: 인증 플로 (SSO 리다이렉트, 세션 쿠키, 401 처리) | §F7 | M | 로그인-로그아웃 e2e
 
 ### Infra
-- [ ] **IN-01**: GitLab CI 파이프라인 (lint, test, build, container 이미지) | §C.9 | M | main push 시 그린, 이미지 레지스트리 푸시
+- [x] **IN-01**: GitHub Actions CI 파이프라인 (lint, test, build) | §C.9 | M | main push 시 그린
 - [ ] **IN-02**: K8s dev 네임스페이스 + 기본 NetworkPolicy | §C.6 | M | dev 클러스터에 backend Pod 배포 성공
 - [ ] **IN-03**: Vault dev 인스턴스 + ExternalSecrets Operator | §C.7 | M | API 키 1건을 Vault → Pod env로 주입 검증
 - [ ] **IN-04**: Temporal dev 클러스터 (또는 매니지드) 셋업 | §C.5 | M | hello-world workflow 1건 동작
