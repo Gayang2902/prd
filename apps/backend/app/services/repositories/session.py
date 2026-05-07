@@ -20,7 +20,7 @@ VALID_TRANSITIONS: dict[SessionState, set[SessionState]] = {
 }
 
 
-class InvalidStateTransition(Exception):
+class InvalidStateTransitionError(Exception):
     pass
 
 
@@ -50,16 +50,19 @@ class SessionRepository:
             SessionPriority.BACKGROUND,
         ]
         stmt = select(AnalysisSession).where(
-            AnalysisSession.state.in_([
-                SessionState.QUEUED,
-                SessionState.PREPARING,
-                SessionState.RUNNING,
-                SessionState.POST_PROCESSING,
-            ])
+            AnalysisSession.state.in_(
+                [
+                    SessionState.QUEUED,
+                    SessionState.PREPARING,
+                    SessionState.RUNNING,
+                    SessionState.POST_PROCESSING,
+                ]
+            )
         )
         if state is not None:
             stmt = stmt.where(AnalysisSession.state == state)
         from sqlalchemy import case
+
         stmt = stmt.order_by(
             case(
                 {p: i for i, p in enumerate(priority_order)},
@@ -97,7 +100,7 @@ class SessionRepository:
     ) -> AnalysisSession:
         allowed = VALID_TRANSITIONS.get(analysis.state, set())
         if new_state not in allowed:
-            raise InvalidStateTransition(
+            raise InvalidStateTransitionError(
                 f"Cannot transition from {analysis.state} to {new_state}"
             )
         analysis.state = new_state

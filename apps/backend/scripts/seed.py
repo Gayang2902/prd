@@ -7,8 +7,6 @@ Usage:
 import asyncio
 import uuid
 
-from sqlalchemy import select
-
 from app.core.database import async_session_factory, engine
 from app.models.agent import Agent
 from app.models.base import Base
@@ -36,7 +34,9 @@ async def seed() -> None:
         users = [
             User(id=ADMIN_ID, email="admin@securescope.dev", name="관리자", role=Role.ADMIN),
             User(id=LEAD_ID, email="lead@securescope.dev", name="팀 리드", role=Role.LEAD),
-            User(id=REVIEWER_ID, email="reviewer@securescope.dev", name="검수자", role=Role.REVIEWER),
+            User(
+                id=REVIEWER_ID, email="reviewer@securescope.dev", name="검수자", role=Role.REVIEWER
+            ),
         ]
         session.add_all(users)
 

@@ -4,7 +4,7 @@ from datetime import datetime
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.finding import Finding, RegressionStatus
+from app.models.finding import Finding
 from app.models.finding_status import FindingStatus, VerificationStatus
 
 

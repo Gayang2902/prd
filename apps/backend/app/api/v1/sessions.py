@@ -1,11 +1,11 @@
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth import CurrentUser, Role, require_role
+from app.auth import Role, require_role
 from app.core.database import get_session
 from app.models.analysis_session import SessionState
 from app.schemas.analysis_session import SessionCreate, SessionRead
@@ -90,7 +90,7 @@ async def cancel_session(
     try:
         analysis = await repo.transition(analysis, SessionState.CANCELED)
     except Exception as e:
-        raise HTTPException(status_code=409, detail=str(e))
+        raise HTTPException(status_code=409, detail=str(e)) from None
     await db.commit()
     return SessionRead.model_validate(analysis)
 
@@ -105,14 +105,16 @@ async def stream_session_logs(
         raise HTTPException(status_code=404, detail="Session not found")
 
     async def event_generator():
-        yield f"event: state\ndata: {{\"state\": \"{analysis.state.value}\", \"ts\": \"{datetime.now(timezone.utc).isoformat()}\"}}\n\n"
+        state = analysis.state.value
+        ts = datetime.now(UTC).isoformat()
+        yield f'event: state\ndata: {{"state": "{state}", "ts": "{ts}"}}\n\n'
 
         if analysis.state in (
             SessionState.COMPLETED,
             SessionState.FAILED,
             SessionState.CANCELED,
         ):
-            yield f"event: done\ndata: {{\"state\": \"{analysis.state.value}\", \"ts\": \"{datetime.now(timezone.utc).isoformat()}\"}}\n\n"
+            yield f'event: done\ndata: {{"state": "{state}", "ts": "{ts}"}}\n\n'
 
     return StreamingResponse(
         event_generator(),

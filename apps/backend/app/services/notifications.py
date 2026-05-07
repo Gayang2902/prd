@@ -42,12 +42,16 @@ async def send_slack(notification: Notification) -> bool:
 
     try:
         import httpx
+
         payload = {
             "text": f"*[{notification.trigger.value}]* {notification.title}",
             "blocks": [
                 {
                     "type": "section",
-                    "text": {"type": "mrkdwn", "text": f"*{notification.title}*\n{notification.body}"},
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": f"*{notification.title}*\n{notification.body}",
+                    },
                 }
             ],
         }
@@ -87,13 +91,15 @@ async def notify_analysis_completed(
     finding_count: int,
     cost: str,
 ) -> None:
-    await notify(Notification(
-        trigger=TriggerType.ANALYSIS_COMPLETED,
-        title="분석 완료",
-        body=f"세션 `{str(session_id)[:8]}` 완료 — 발견 {finding_count}건, 비용 ${cost}",
-        project_id=project_id,
-        session_id=session_id,
-    ))
+    await notify(
+        Notification(
+            trigger=TriggerType.ANALYSIS_COMPLETED,
+            title="분석 완료",
+            body=f"세션 `{str(session_id)[:8]}` 완료 — 발견 {finding_count}건, 비용 ${cost}",
+            project_id=project_id,
+            session_id=session_id,
+        )
+    )
 
 
 async def notify_analysis_failed(
@@ -101,13 +107,15 @@ async def notify_analysis_failed(
     session_id: uuid.UUID,
     reason: str,
 ) -> None:
-    await notify(Notification(
-        trigger=TriggerType.ANALYSIS_FAILED,
-        title="분석 실패",
-        body=f"세션 `{str(session_id)[:8]}` 실패: {reason}",
-        project_id=project_id,
-        session_id=session_id,
-    ))
+    await notify(
+        Notification(
+            trigger=TriggerType.ANALYSIS_FAILED,
+            title="분석 실패",
+            body=f"세션 `{str(session_id)[:8]}` 실패: {reason}",
+            project_id=project_id,
+            session_id=session_id,
+        )
+    )
 
 
 async def notify_budget_threshold(
@@ -115,11 +123,13 @@ async def notify_budget_threshold(
     budget: str,
     percentage: int,
 ) -> None:
-    await notify(Notification(
-        trigger=TriggerType.BUDGET_THRESHOLD,
-        title=f"예산 {percentage}% 도달",
-        body=f"현재 비용 ${current_cost} / 예산 ${budget} ({percentage}%)",
-    ))
+    await notify(
+        Notification(
+            trigger=TriggerType.BUDGET_THRESHOLD,
+            title=f"예산 {percentage}% 도달",
+            body=f"현재 비용 ${current_cost} / 예산 ${budget} ({percentage}%)",
+        )
+    )
 
 
 async def notify_critical_finding(
@@ -127,10 +137,12 @@ async def notify_critical_finding(
     session_id: uuid.UUID,
     finding_title: str,
 ) -> None:
-    await notify(Notification(
-        trigger=TriggerType.FINDING_CRITICAL,
-        title="Critical 취약점 발견",
-        body=f"세션 `{str(session_id)[:8]}`: {finding_title}",
-        project_id=project_id,
-        session_id=session_id,
-    ))
+    await notify(
+        Notification(
+            trigger=TriggerType.FINDING_CRITICAL,
+            title="Critical 취약점 발견",
+            body=f"세션 `{str(session_id)[:8]}`: {finding_title}",
+            project_id=project_id,
+            session_id=session_id,
+        )
+    )

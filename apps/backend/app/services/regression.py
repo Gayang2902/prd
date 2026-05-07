@@ -24,10 +24,8 @@ async def compute_regression_labels(
     project_id: uuid.UUID,
 ) -> dict[str, int]:
     current_findings = (
-        await db.execute(
-            select(Finding).where(Finding.session_id == session_id)
-        )
-    ).scalars().all()
+        (await db.execute(select(Finding).where(Finding.session_id == session_id))).scalars().all()
+    )
 
     prev_session = (
         await db.execute(
@@ -49,10 +47,10 @@ async def compute_regression_labels(
         return {"new": len(current_findings), "recurring": 0, "resolved": 0, "carried_over": 0}
 
     prev_findings = (
-        await db.execute(
-            select(Finding).where(Finding.session_id == prev_session.id)
-        )
-    ).scalars().all()
+        (await db.execute(select(Finding).where(Finding.session_id == prev_session.id)))
+        .scalars()
+        .all()
+    )
 
     prev_fingerprints = {f.fingerprint for f in prev_findings}
     current_fingerprints = {f.fingerprint for f in current_findings}

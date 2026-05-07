@@ -23,6 +23,7 @@ class RegressionSummary(BaseModel):
     resolved: int
     total: int
 
+
 router = APIRouter(prefix="/projects", tags=["projects"])
 
 
@@ -95,15 +96,17 @@ async def get_regression_history(
         new = count_map.get(RegressionStatus.NEW, 0)
         recurring = count_map.get(RegressionStatus.RECURRING, 0)
         resolved = count_map.get(RegressionStatus.RESOLVED, 0)
-        summaries.append(RegressionSummary(
-            session_id=s.id,
-            commit_sha=s.commit_sha,
-            started_at=s.started_at.isoformat(),
-            new=new,
-            recurring=recurring,
-            resolved=resolved,
-            total=new + recurring,
-        ))
+        summaries.append(
+            RegressionSummary(
+                session_id=s.id,
+                commit_sha=s.commit_sha,
+                started_at=s.started_at.isoformat(),
+                new=new,
+                recurring=recurring,
+                resolved=resolved,
+                total=new + recurring,
+            )
+        )
 
     return summaries
 

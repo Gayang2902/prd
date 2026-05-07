@@ -7,7 +7,7 @@ from app.schemas.finding import (
     FindingStatusUpdate,
 )
 from app.schemas.project import ProjectCreate, ProjectRead, ProjectUpdate
-from app.schemas.user import UserCreate, UserRead
+from app.schemas.user import UserRead
 
 __all__ = [
     "CommentCreate",

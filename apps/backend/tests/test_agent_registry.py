@@ -2,8 +2,9 @@
 
 from unittest.mock import MagicMock, patch
 
-from app.services.agent_registry import _registry, discover_agents, get_agent_metadata, get_registry
 from securescope_schemas.agent_interface import BaseAgent
+
+from app.services.agent_registry import _registry, discover_agents, get_agent_metadata, get_registry
 
 
 def setup_function() -> None:

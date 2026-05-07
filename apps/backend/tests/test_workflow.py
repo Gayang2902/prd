@@ -2,14 +2,6 @@ import asyncio
 import uuid
 
 import pytest
-from temporalio import activity
-from temporalio.client import WorkflowFailureError
-from temporalio.testing import WorkflowEnvironment
-from temporalio.worker import Worker
-
-from app.models.analysis_session import SessionState
-from app.workflows.analysis import AnalysisWorkflow
-from app.workflows.models import EnvHandle
 from securescope_schemas.agent_interface import (
     AgentFinding,
     AnalysisContext,
@@ -19,6 +11,14 @@ from securescope_schemas.agent_interface import (
     ResourceLimits,
     Severity,
 )
+from temporalio import activity
+from temporalio.client import WorkflowFailureError
+from temporalio.testing import WorkflowEnvironment
+from temporalio.worker import Worker
+
+from app.models.analysis_session import SessionState
+from app.workflows.analysis import AnalysisWorkflow
+from app.workflows.models import EnvHandle
 
 
 def _make_context(session_id: uuid.UUID | None = None) -> AnalysisContext:

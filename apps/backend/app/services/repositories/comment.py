@@ -18,9 +18,7 @@ class CommentRepository:
         )
         return list(result.scalars().all())
 
-    async def create(
-        self, *, finding_id: uuid.UUID, author_id: uuid.UUID, content: str
-    ) -> Comment:
+    async def create(self, *, finding_id: uuid.UUID, author_id: uuid.UUID, content: str) -> Comment:
         comment = Comment(finding_id=finding_id, author_id=author_id, content=content)
         self._session.add(comment)
         await self._session.flush()

@@ -1,13 +1,9 @@
 """Tests for auth dependencies."""
 
-import uuid
-
-from fastapi import FastAPI, Depends
 from fastapi.testclient import TestClient
 
-from app.auth import CurrentUser, Role, require_role
-from app.auth.dependencies import get_current_user, ROLE_HIERARCHY
-from app.core.errors import register_error_handlers
+from app.auth import Role
+from app.auth.dependencies import ROLE_HIERARCHY
 
 
 def test_role_hierarchy_ordering() -> None:

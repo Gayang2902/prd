@@ -37,12 +37,8 @@ class AnalysisSession(Base):
     container_image_sha: Mapped[str | None] = mapped_column(String(100), default=None)
     state: Mapped[SessionState] = mapped_column(default=SessionState.QUEUED)
     priority: Mapped[SessionPriority] = mapped_column(default=SessionPriority.NORMAL)
-    started_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
-    )
-    completed_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), default=None
-    )
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
     token_usage: Mapped[int] = mapped_column(Integer, default=0)
     cost: Mapped[Decimal] = mapped_column(Numeric(10, 4), default=Decimal("0"))
 

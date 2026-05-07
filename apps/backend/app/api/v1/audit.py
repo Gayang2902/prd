@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth import require_role, Role
+from app.auth import Role, require_role
 from app.core.database import get_session
 from app.services.audit import list_audit_logs
 

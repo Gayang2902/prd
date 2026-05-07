@@ -1,4 +1,4 @@
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from decimal import Decimal
 
 from sqlalchemy import func, select
@@ -20,9 +20,13 @@ async def cost_summary(
     ).where(AnalysisSession.state == "completed")
 
     if since:
-        stmt = stmt.where(AnalysisSession.started_at >= datetime(since.year, since.month, since.day, tzinfo=timezone.utc))
+        stmt = stmt.where(
+            AnalysisSession.started_at >= datetime(since.year, since.month, since.day, tzinfo=UTC)
+        )
     if until:
-        stmt = stmt.where(AnalysisSession.started_at < datetime(until.year, until.month, until.day, tzinfo=timezone.utc))
+        stmt = stmt.where(
+            AnalysisSession.started_at < datetime(until.year, until.month, until.day, tzinfo=UTC)
+        )
 
     row = (await db.execute(stmt)).one()
     return {
@@ -51,13 +55,22 @@ async def cost_by_project(
     )
 
     if since:
-        stmt = stmt.where(AnalysisSession.started_at >= datetime(since.year, since.month, since.day, tzinfo=timezone.utc))
+        stmt = stmt.where(
+            AnalysisSession.started_at >= datetime(since.year, since.month, since.day, tzinfo=UTC)
+        )
     if until:
-        stmt = stmt.where(AnalysisSession.started_at < datetime(until.year, until.month, until.day, tzinfo=timezone.utc))
+        stmt = stmt.where(
+            AnalysisSession.started_at < datetime(until.year, until.month, until.day, tzinfo=UTC)
+        )
 
     rows = (await db.execute(stmt)).all()
     return [
-        {"project_id": str(r.project_id), "sessions": r.sessions, "tokens": r.tokens, "cost": r.cost}
+        {
+            "project_id": str(r.project_id),
+            "sessions": r.sessions,
+            "tokens": r.tokens,
+            "cost": r.cost,
+        }
         for r in rows
     ]
 
@@ -81,13 +94,22 @@ async def cost_by_agent(
     )
 
     if since:
-        stmt = stmt.where(AnalysisSession.started_at >= datetime(since.year, since.month, since.day, tzinfo=timezone.utc))
+        stmt = stmt.where(
+            AnalysisSession.started_at >= datetime(since.year, since.month, since.day, tzinfo=UTC)
+        )
     if until:
-        stmt = stmt.where(AnalysisSession.started_at < datetime(until.year, until.month, until.day, tzinfo=timezone.utc))
+        stmt = stmt.where(
+            AnalysisSession.started_at < datetime(until.year, until.month, until.day, tzinfo=UTC)
+        )
 
     rows = (await db.execute(stmt)).all()
     return [
-        {"model_version": r.model_version, "sessions": r.sessions, "tokens": r.tokens, "cost": r.cost}
+        {
+            "model_version": r.model_version,
+            "sessions": r.sessions,
+            "tokens": r.tokens,
+            "cost": r.cost,
+        }
         for r in rows
     ]
 
@@ -112,9 +134,13 @@ async def cost_daily(
     )
 
     if since:
-        stmt = stmt.where(AnalysisSession.started_at >= datetime(since.year, since.month, since.day, tzinfo=timezone.utc))
+        stmt = stmt.where(
+            AnalysisSession.started_at >= datetime(since.year, since.month, since.day, tzinfo=UTC)
+        )
     if until:
-        stmt = stmt.where(AnalysisSession.started_at < datetime(until.year, until.month, until.day, tzinfo=timezone.utc))
+        stmt = stmt.where(
+            AnalysisSession.started_at < datetime(until.year, until.month, until.day, tzinfo=UTC)
+        )
 
     rows = (await db.execute(stmt)).all()
     return [

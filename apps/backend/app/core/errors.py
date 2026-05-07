@@ -21,7 +21,9 @@ def problem_response(
         body["detail"] = detail
     if instance:
         body["instance"] = instance
-    return JSONResponse(status_code=status_code, content=body, media_type="application/problem+json")
+    return JSONResponse(
+        status_code=status_code, content=body, media_type="application/problem+json"
+    )
 
 
 def register_error_handlers(app: FastAPI) -> None:
@@ -34,7 +36,9 @@ def register_error_handlers(app: FastAPI) -> None:
         )
 
     @app.exception_handler(RequestValidationError)
-    async def validation_exception_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
+    async def validation_exception_handler(
+        request: Request, exc: RequestValidationError
+    ) -> JSONResponse:
         errors = exc.errors()
         detail = "; ".join(f"{e['loc'][-1]}: {e['msg']}" for e in errors) if errors else str(exc)
         return problem_response(

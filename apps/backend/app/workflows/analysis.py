@@ -5,6 +5,8 @@ from temporalio import workflow
 from temporalio.common import RetryPolicy
 
 with workflow.unsafe.imports_passed_through():
+    from securescope_schemas.agent_interface import AnalysisContext
+
     from app.models.analysis_session import SessionState
     from app.workflows.activities import (
         cleanup_isolated_env,
@@ -15,7 +17,6 @@ with workflow.unsafe.imports_passed_through():
         run_agent,
     )
     from app.workflows.models import EnvHandle
-    from securescope_schemas.agent_interface import AnalysisContext
 
 
 @workflow.defn(name="AnalysisWorkflow")

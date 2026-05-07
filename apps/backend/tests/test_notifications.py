@@ -101,7 +101,7 @@ def test_notification_defaults() -> None:
 
 
 async def test_send_slack_with_webhook(sample_notification: Notification) -> None:
-    from unittest.mock import patch, AsyncMock, MagicMock
+    from unittest.mock import AsyncMock, MagicMock, patch
 
     mock_settings = MagicMock()
     mock_settings.slack_webhook_url = "https://hooks.slack.com/test"
@@ -114,14 +114,16 @@ async def test_send_slack_with_webhook(sample_notification: Notification) -> Non
     mock_client.__aexit__ = AsyncMock(return_value=False)
     mock_client.post = AsyncMock(return_value=mock_response)
 
-    with patch("app.services.notifications.settings", mock_settings), \
-         patch("httpx.AsyncClient", return_value=mock_client):
+    with (
+        patch("app.services.notifications.settings", mock_settings),
+        patch("httpx.AsyncClient", return_value=mock_client),
+    ):
         result = await send_slack(sample_notification)
     assert result is True
 
 
 async def test_send_slack_with_webhook_failure(sample_notification: Notification) -> None:
-    from unittest.mock import patch, AsyncMock, MagicMock
+    from unittest.mock import AsyncMock, MagicMock, patch
 
     mock_settings = MagicMock()
     mock_settings.slack_webhook_url = "https://hooks.slack.com/test"
@@ -131,14 +133,16 @@ async def test_send_slack_with_webhook_failure(sample_notification: Notification
     mock_client.__aexit__ = AsyncMock(return_value=False)
     mock_client.post = AsyncMock(side_effect=Exception("connection error"))
 
-    with patch("app.services.notifications.settings", mock_settings), \
-         patch("httpx.AsyncClient", return_value=mock_client):
+    with (
+        patch("app.services.notifications.settings", mock_settings),
+        patch("httpx.AsyncClient", return_value=mock_client),
+    ):
         result = await send_slack(sample_notification)
     assert result is False
 
 
 async def test_send_email_with_smtp(sample_notification: Notification) -> None:
-    from unittest.mock import patch, MagicMock
+    from unittest.mock import MagicMock, patch
 
     mock_settings = MagicMock()
     mock_settings.smtp_host = "smtp.example.com"

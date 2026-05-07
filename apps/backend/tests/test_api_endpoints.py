@@ -1,7 +1,7 @@
 """Tests for API endpoints with mocked dependencies."""
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from decimal import Decimal
 from unittest.mock import AsyncMock, MagicMock
 
@@ -16,7 +16,7 @@ from app.models.finding_status import VerificationStatus
 from app.models.project import Priority, ProjectStatus
 from app.models.user import Role
 
-_NOW = datetime(2026, 5, 7, 12, 0, 0, tzinfo=timezone.utc)
+_NOW = datetime(2026, 5, 7, 12, 0, 0, tzinfo=UTC)
 
 
 def _mock_user(**overrides):
@@ -38,7 +38,7 @@ def _mock_project(**overrides):
     p.owner_id = overrides.get("owner_id", uuid.uuid4())
     p.priority = overrides.get("priority", Priority.NORMAL)
     p.status = overrides.get("status", ProjectStatus.PENDING)
-    p.deadline = overrides.get("deadline", None)
+    p.deadline = overrides.get("deadline")
     p.created_at = _NOW
     p.updated_at = _NOW
     return p
@@ -68,11 +68,11 @@ def _mock_session(**overrides):
     s.agent_id = overrides.get("agent_id", uuid.uuid4())
     s.preset_id = overrides.get("preset_id", uuid.uuid4())
     s.model_version = overrides.get("model_version", "test-v1")
-    s.container_image_sha = overrides.get("container_image_sha", None)
+    s.container_image_sha = overrides.get("container_image_sha")
     s.state = overrides.get("state", SessionState.QUEUED)
     s.priority = overrides.get("priority", SessionPriority.NORMAL)
     s.started_at = _NOW
-    s.completed_at = overrides.get("completed_at", None)
+    s.completed_at = overrides.get("completed_at")
     s.token_usage = overrides.get("token_usage", 0)
     s.cost = overrides.get("cost", Decimal("0"))
     return s
@@ -228,11 +228,14 @@ def test_create_preset() -> None:
     _setup_overrides()
 
     client = TestClient(app, raise_server_exceptions=False)
-    resp = client.post("/api/v1/presets", json={
-        "name": "New Preset",
-        "agent_id": str(uuid.uuid4()),
-        "version_sha": "xyz789",
-    })
+    resp = client.post(
+        "/api/v1/presets",
+        json={
+            "name": "New Preset",
+            "agent_id": str(uuid.uuid4()),
+            "version_sha": "xyz789",
+        },
+    )
     assert resp.status_code == 201
     _cleanup()
 
@@ -426,11 +429,14 @@ def test_create_user_duplicate() -> None:
     _setup_overrides()
 
     client = TestClient(app, raise_server_exceptions=False)
-    resp = client.post("/api/v1/users", json={
-        "email": "test@example.com",
-        "name": "Test",
-        "role": "viewer",
-    })
+    resp = client.post(
+        "/api/v1/users",
+        json={
+            "email": "test@example.com",
+            "name": "Test",
+            "role": "viewer",
+        },
+    )
     assert resp.status_code == 409
     _cleanup()
 
@@ -462,9 +468,16 @@ def test_cost_summary() -> None:
     app.dependency_overrides[get_session] = lambda: mock_db
     app.dependency_overrides[get_current_user] = lambda: _mock_user()
 
-    with patch("app.api.v1.usage.cost_summary", new=AsyncMock(return_value={
-        "total_sessions": 10, "total_tokens": 5000, "total_cost": Decimal("12.50")
-    })):
+    with patch(
+        "app.api.v1.usage.cost_summary",
+        new=AsyncMock(
+            return_value={
+                "total_sessions": 10,
+                "total_tokens": 5000,
+                "total_cost": Decimal("12.50"),
+            }
+        ),
+    ):
         client = TestClient(app, raise_server_exceptions=False)
         resp = client.get("/api/v1/usage/cost")
         assert resp.status_code == 200
@@ -482,7 +495,7 @@ def _mock_finding_status(**overrides):
     fs.finding_id = overrides.get("finding_id", uuid.uuid4())
     fs.changed_by = overrides.get("changed_by", uuid.uuid4())
     fs.status = overrides.get("status", VerificationStatus.OPEN)
-    fs.reason = overrides.get("reason", None)
+    fs.reason = overrides.get("reason")
     fs.changed_at = _NOW
     return fs
 
@@ -536,10 +549,13 @@ def test_update_finding_status() -> None:
     _setup_overrides()
 
     client = TestClient(app, raise_server_exceptions=False)
-    resp = client.patch(f"/api/v1/findings/{uuid.uuid4()}/status", json={
-        "status": "confirmed",
-        "reason": "Verified manually",
-    })
+    resp = client.patch(
+        f"/api/v1/findings/{uuid.uuid4()}/status",
+        json={
+            "status": "confirmed",
+            "reason": "Verified manually",
+        },
+    )
     assert resp.status_code == 200
     _cleanup()
 
@@ -553,9 +569,12 @@ def test_update_finding_status_not_found() -> None:
     _setup_overrides()
 
     client = TestClient(app, raise_server_exceptions=False)
-    resp = client.patch(f"/api/v1/findings/{uuid.uuid4()}/status", json={
-        "status": "confirmed",
-    })
+    resp = client.patch(
+        f"/api/v1/findings/{uuid.uuid4()}/status",
+        json={
+            "status": "confirmed",
+        },
+    )
     assert resp.status_code == 404
     _cleanup()
 
@@ -599,9 +618,12 @@ def test_create_comment() -> None:
     _setup_overrides()
 
     client = TestClient(app, raise_server_exceptions=False)
-    resp = client.post(f"/api/v1/findings/{uuid.uuid4()}/comments", json={
-        "content": "This needs fixing",
-    })
+    resp = client.post(
+        f"/api/v1/findings/{uuid.uuid4()}/comments",
+        json={
+            "content": "This needs fixing",
+        },
+    )
     assert resp.status_code == 201
     _cleanup()
 
@@ -644,9 +666,10 @@ def test_create_report() -> None:
 
     _setup_overrides()
 
-    with patch("app.api.v1.reports.generate_report", new=AsyncMock(
-        return_value=("# Report", "text/markdown", "report_abc_20260507.md")
-    )):
+    with patch(
+        "app.api.v1.reports.generate_report",
+        new=AsyncMock(return_value=("# Report", "text/markdown", "report_abc_20260507.md")),
+    ):
         client = TestClient(app, raise_server_exceptions=False)
         resp = client.post(f"/api/v1/sessions/{uuid.uuid4()}/reports?format=markdown")
         assert resp.status_code == 200
@@ -661,9 +684,12 @@ def test_create_report_csv() -> None:
 
     _setup_overrides()
 
-    with patch("app.api.v1.reports.generate_report", new=AsyncMock(
-        return_value=("severity,title\nhigh,XSS", "text/csv", "report_abc_20260507.csv")
-    )):
+    with patch(
+        "app.api.v1.reports.generate_report",
+        new=AsyncMock(
+            return_value=("severity,title\nhigh,XSS", "text/csv", "report_abc_20260507.csv")
+        ),
+    ):
         client = TestClient(app, raise_server_exceptions=False)
         resp = client.post(f"/api/v1/sessions/{uuid.uuid4()}/reports?format=csv")
         assert resp.status_code == 200
@@ -677,9 +703,19 @@ def test_cost_by_project() -> None:
 
     _setup_overrides()
 
-    with patch("app.api.v1.usage.cost_by_project", new=AsyncMock(return_value=[
-        {"project_id": str(uuid.uuid4()), "sessions": 5, "tokens": 2000, "cost": Decimal("5.00")}
-    ])):
+    with patch(
+        "app.api.v1.usage.cost_by_project",
+        new=AsyncMock(
+            return_value=[
+                {
+                    "project_id": str(uuid.uuid4()),
+                    "sessions": 5,
+                    "tokens": 2000,
+                    "cost": Decimal("5.00"),
+                }
+            ]
+        ),
+    ):
         client = TestClient(app, raise_server_exceptions=False)
         resp = client.get("/api/v1/usage/by-project")
         assert resp.status_code == 200
@@ -692,9 +728,14 @@ def test_cost_by_agent() -> None:
 
     _setup_overrides()
 
-    with patch("app.api.v1.usage.cost_by_agent", new=AsyncMock(return_value=[
-        {"model_version": "test-v1", "sessions": 3, "tokens": 1000, "cost": Decimal("3.00")}
-    ])):
+    with patch(
+        "app.api.v1.usage.cost_by_agent",
+        new=AsyncMock(
+            return_value=[
+                {"model_version": "test-v1", "sessions": 3, "tokens": 1000, "cost": Decimal("3.00")}
+            ]
+        ),
+    ):
         client = TestClient(app, raise_server_exceptions=False)
         resp = client.get("/api/v1/usage/by-agent")
         assert resp.status_code == 200
@@ -707,9 +748,14 @@ def test_cost_daily() -> None:
 
     _setup_overrides()
 
-    with patch("app.api.v1.usage.cost_daily", new=AsyncMock(return_value=[
-        {"date": "2026-05-07", "sessions": 2, "tokens": 500, "cost": Decimal("1.00")}
-    ])):
+    with patch(
+        "app.api.v1.usage.cost_daily",
+        new=AsyncMock(
+            return_value=[
+                {"date": "2026-05-07", "sessions": 2, "tokens": 500, "cost": Decimal("1.00")}
+            ]
+        ),
+    ):
         client = TestClient(app, raise_server_exceptions=False)
         resp = client.get("/api/v1/usage/daily")
         assert resp.status_code == 200
@@ -721,8 +767,9 @@ def test_cost_daily() -> None:
 
 
 def test_create_session_no_agents() -> None:
-    from app.api.v1.sessions import _get_repo
     from unittest.mock import patch
+
+    from app.api.v1.sessions import _get_repo
 
     mock_repo = AsyncMock()
     app.dependency_overrides[_get_repo] = lambda: mock_repo
@@ -730,12 +777,15 @@ def test_create_session_no_agents() -> None:
 
     with patch("app.api.v1.sessions.get_registry", return_value={}):
         client = TestClient(app, raise_server_exceptions=False)
-        resp = client.post(f"/api/v1/projects/{uuid.uuid4()}/sessions", json={
-            "branch": "main",
-            "commit_sha": "abc1234",
-            "preset_id": str(uuid.uuid4()),
-            "agent_id": str(uuid.uuid4()),
-        })
+        resp = client.post(
+            f"/api/v1/projects/{uuid.uuid4()}/sessions",
+            json={
+                "branch": "main",
+                "commit_sha": "abc1234",
+                "preset_id": str(uuid.uuid4()),
+                "agent_id": str(uuid.uuid4()),
+            },
+        )
         assert resp.status_code == 400
         body = resp.json()
         assert "No agents" in body.get("detail", body.get("title", ""))
@@ -744,8 +794,9 @@ def test_create_session_no_agents() -> None:
 
 
 def test_create_session_success() -> None:
-    from app.api.v1.sessions import _get_repo
     from unittest.mock import patch
+
+    from app.api.v1.sessions import _get_repo
 
     mock_repo = AsyncMock()
     mock_repo.create.return_value = _mock_session()
@@ -760,12 +811,15 @@ def test_create_session_success() -> None:
 
     with patch("app.api.v1.sessions.get_registry", return_value={"test": fake_agent}):
         client = TestClient(app, raise_server_exceptions=False)
-        resp = client.post(f"/api/v1/projects/{uuid.uuid4()}/sessions", json={
-            "branch": "main",
-            "commit_sha": "abc1234",
-            "preset_id": str(uuid.uuid4()),
-            "agent_id": str(uuid.uuid4()),
-        })
+        resp = client.post(
+            f"/api/v1/projects/{uuid.uuid4()}/sessions",
+            json={
+                "branch": "main",
+                "commit_sha": "abc1234",
+                "preset_id": str(uuid.uuid4()),
+                "agent_id": str(uuid.uuid4()),
+            },
+        )
         assert resp.status_code == 202
 
     _cleanup()
@@ -833,11 +887,14 @@ def test_create_user_success() -> None:
     _setup_overrides()
 
     client = TestClient(app, raise_server_exceptions=False)
-    resp = client.post("/api/v1/users", json={
-        "email": "new@example.com",
-        "name": "New User",
-        "role": "viewer",
-    })
+    resp = client.post(
+        "/api/v1/users",
+        json={
+            "email": "new@example.com",
+            "name": "New User",
+            "role": "viewer",
+        },
+    )
     assert resp.status_code == 201
 
     _cleanup()

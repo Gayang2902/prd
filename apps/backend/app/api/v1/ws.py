@@ -4,8 +4,6 @@ Clients connect per session. When a reviewer changes a finding status or adds
 a comment, the event is broadcast to all other connected reviewers.
 """
 
-import json
-import uuid
 from collections import defaultdict
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect

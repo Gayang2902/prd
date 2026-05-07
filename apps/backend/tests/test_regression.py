@@ -1,8 +1,6 @@
 """Tests for regression matching algorithm."""
 
 import uuid
-
-import pytest
 from unittest.mock import AsyncMock, MagicMock
 
 from app.models.finding import RegressionStatus
@@ -28,6 +26,7 @@ def _make_session(project_id: uuid.UUID):
 def test_no_prev_session_all_new() -> None:
     """When no prior session exists, all findings should be NEW."""
     import asyncio
+
     from app.services.regression import compute_regression_labels
 
     project_id = uuid.uuid4()
@@ -60,6 +59,7 @@ def test_no_prev_session_all_new() -> None:
 def test_with_prev_session_classifies_correctly() -> None:
     """Findings present in both sessions are RECURRING, only-new are NEW, only-old are RESOLVED."""
     import asyncio
+
     from app.services.regression import compute_regression_labels
 
     project_id = uuid.uuid4()

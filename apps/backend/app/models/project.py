@@ -35,6 +35,4 @@ class Project(TimestampMixin, Base):
     deadline: Mapped[date | None] = mapped_column(default=None)
 
     owner: Mapped["User"] = relationship(back_populates="projects")  # noqa: F821
-    sessions: Mapped[list["AnalysisSession"]] = relationship(  # noqa: F821
-        back_populates="project"
-    )
+    sessions: Mapped[list["AnalysisSession"]] = relationship(back_populates="project")  # noqa: F821

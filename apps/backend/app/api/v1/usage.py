@@ -3,7 +3,7 @@ from datetime import date
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth import require_role, Role
+from app.auth import Role, require_role
 from app.core.database import get_session
 from app.services.cost_aggregation import cost_by_agent, cost_by_project, cost_daily, cost_summary
 

@@ -1,8 +1,7 @@
 import uuid
 from typing import Annotated
 
-from fastapi import Depends, HTTPException, Header, status
-from sqlalchemy import select
+from fastapi import Depends, Header, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_session
@@ -17,7 +16,7 @@ async def get_current_user(
     try:
         user_id = uuid.UUID(x_user_id)
     except ValueError:
-        raise HTTPException(status_code=401, detail="Invalid user ID")
+        raise HTTPException(status_code=401, detail="Invalid user ID") from None
     user = await session.get(User, user_id)
     if user is None:
         raise HTTPException(status_code=401, detail="User not found")

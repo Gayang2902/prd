@@ -33,6 +33,7 @@ def test_regression_status_values() -> None:
 
 def test_role_hierarchy() -> None:
     from app.auth.dependencies import ROLE_HIERARCHY
+
     assert ROLE_HIERARCHY[Role.VIEWER] < ROLE_HIERARCHY[Role.REVIEWER]
     assert ROLE_HIERARCHY[Role.REVIEWER] < ROLE_HIERARCHY[Role.LEAD]
     assert ROLE_HIERARCHY[Role.LEAD] < ROLE_HIERARCHY[Role.ADMIN]
@@ -40,6 +41,7 @@ def test_role_hierarchy() -> None:
 
 def test_state_transitions_defined() -> None:
     from app.services.repositories.session import VALID_TRANSITIONS
+
     assert SessionState.PREPARING in VALID_TRANSITIONS[SessionState.QUEUED]
     assert SessionState.CANCELED in VALID_TRANSITIONS[SessionState.QUEUED]
     assert len(VALID_TRANSITIONS[SessionState.COMPLETED]) == 0

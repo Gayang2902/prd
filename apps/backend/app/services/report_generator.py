@@ -28,40 +28,41 @@ async def generate_report(
 
     if format == "markdown":
         return _to_markdown(findings, session_id), "text/markdown", f"report_{sid_short}_{ts}.md"
-    elif format == "csv":
+    if format == "csv":
         return _to_csv(findings), "text/csv", f"report_{sid_short}_{ts}.csv"
-    else:
-        return _to_json(findings), "application/json", f"report_{sid_short}_{ts}.json"
+    return _to_json(findings), "application/json", f"report_{sid_short}_{ts}.json"
 
 
 def _to_markdown(findings, session_id) -> str:
     lines = [
-        f"# SecureScope 분석 리포트",
-        f"",
+        "# SecureScope 분석 리포트",
+        "",
         f"**세션**: `{session_id}`  ",
         f"**생성일**: {datetime.utcnow().isoformat()}  ",
         f"**총 취약점**: {len(findings)}건",
-        f"",
-        f"---",
-        f"",
+        "",
+        "---",
+        "",
     ]
 
     severity_order = {"critical": 0, "high": 1, "medium": 2, "low": 3, "info": 4}
     sorted_findings = sorted(findings, key=lambda f: severity_order.get(f.severity.value, 99))
 
     for f in sorted_findings:
-        lines.extend([
-            f"## [{f.severity.value.upper()}] {f.title}",
-            f"",
-            f"- **카테고리**: {f.category}",
-            f"- **파일**: `{f.file_path}:{f.line_start}-{f.line_end}`",
-            f"- **회귀 상태**: {f.regression_status.value}",
-            f"",
-            f"{f.description}",
-            f"",
-            f"---",
-            f"",
-        ])
+        lines.extend(
+            [
+                f"## [{f.severity.value.upper()}] {f.title}",
+                "",
+                f"- **카테고리**: {f.category}",
+                f"- **파일**: `{f.file_path}:{f.line_start}-{f.line_end}`",
+                f"- **회귀 상태**: {f.regression_status.value}",
+                "",
+                f"{f.description}",
+                "",
+                "---",
+                "",
+            ]
+        )
 
     return "\n".join(lines)
 
@@ -69,15 +70,31 @@ def _to_markdown(findings, session_id) -> str:
 def _to_csv(findings) -> str:
     output = io.StringIO()
     writer = csv.writer(output)
-    writer.writerow([
-        "severity", "category", "title", "file_path",
-        "line_start", "line_end", "description", "regression_status",
-    ])
+    writer.writerow(
+        [
+            "severity",
+            "category",
+            "title",
+            "file_path",
+            "line_start",
+            "line_end",
+            "description",
+            "regression_status",
+        ]
+    )
     for f in findings:
-        writer.writerow([
-            f.severity.value, f.category, f.title, f.file_path,
-            f.line_start, f.line_end, f.description, f.regression_status.value,
-        ])
+        writer.writerow(
+            [
+                f.severity.value,
+                f.category,
+                f.title,
+                f.file_path,
+                f.line_start,
+                f.line_end,
+                f.description,
+                f.regression_status.value,
+            ]
+        )
     return output.getvalue()
 
 

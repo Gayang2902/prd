@@ -25,9 +25,7 @@ class FindingStatus(Base):
     changed_by: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"))
     status: Mapped[VerificationStatus]
     reason: Mapped[str | None] = mapped_column(Text, default=None)
-    changed_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
-    )
+    changed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     finding: Mapped["Finding"] = relationship(back_populates="statuses")  # noqa: F821
     user: Mapped["User"] = relationship()  # noqa: F821

@@ -3,11 +3,11 @@ from decimal import Decimal
 from uuid import UUID
 
 import structlog
+from securescope_schemas.agent_interface import AnalysisContext, AnalysisResult, CodeScope, LogEvent
 from temporalio import activity
 
 from app.models.analysis_session import SessionState
 from app.workflows.models import EnvHandle
-from securescope_schemas.agent_interface import AnalysisContext, AnalysisResult, CodeScope, LogEvent
 
 logger = structlog.get_logger()
 
@@ -28,7 +28,7 @@ async def clone_repository(env: EnvHandle, scope: CodeScope) -> None:
     )
 
 
-class ResourceLimitExceeded(RuntimeError):
+class ResourceLimitExceededError(RuntimeError):
     pass
 
 
@@ -53,20 +53,22 @@ async def run_agent(env: EnvHandle, ctx: AnalysisContext) -> AnalysisResult:
         if isinstance(event, LogEvent):
             if event.tokens_used is not None:
                 accumulated_tokens = event.tokens_used
-            activity.heartbeat({
-                "progress": event.progress,
-                "tokens_used": accumulated_tokens,
-            })
+            activity.heartbeat(
+                {
+                    "progress": event.progress,
+                    "tokens_used": accumulated_tokens,
+                }
+            )
 
             elapsed = time.monotonic() - start_time
             if elapsed > limits.max_runtime_seconds:
                 await agent.terminate()
-                raise ResourceLimitExceeded(
+                raise ResourceLimitExceededError(
                     f"Runtime limit exceeded: {elapsed:.0f}s > {limits.max_runtime_seconds}s"
                 )
             if accumulated_tokens > limits.max_tokens:
                 await agent.terminate()
-                raise ResourceLimitExceeded(
+                raise ResourceLimitExceededError(
                     f"Token limit exceeded: {accumulated_tokens} > {limits.max_tokens}"
                 )
 
@@ -121,6 +123,7 @@ async def post_process_findings(session_id: UUID, result: AnalysisResult) -> int
 
         if analysis is not None:
             from app.services.regression import compute_regression_labels
+
             await compute_regression_labels(session, session_id, analysis.project_id)
 
         await session.commit()
