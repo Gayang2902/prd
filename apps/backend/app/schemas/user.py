@@ -6,6 +6,12 @@ from pydantic import BaseModel
 from app.models.user import Role
 
 
+class UserCreate(BaseModel):
+    email: str
+    name: str
+    role: Role = Role.VIEWER
+
+
 class UserRead(BaseModel):
     model_config = {"from_attributes": True}
 
