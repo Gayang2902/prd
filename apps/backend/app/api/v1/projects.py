@@ -1,14 +1,27 @@
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import select
+from pydantic import BaseModel
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_session
+from app.models.analysis_session import AnalysisSession
+from app.models.finding import Finding, RegressionStatus
 from app.models.project import ProjectStatus
 from app.models.user import User
 from app.schemas.project import ProjectCreate, ProjectRead, ProjectUpdate
 from app.services.repositories.project import ProjectRepository
+
+
+class RegressionSummary(BaseModel):
+    session_id: uuid.UUID
+    commit_sha: str
+    started_at: str
+    new: int
+    recurring: int
+    resolved: int
+    total: int
 
 router = APIRouter(prefix="/projects", tags=["projects"])
 
@@ -51,6 +64,48 @@ async def get_project(
     if project is None:
         raise HTTPException(status_code=404, detail="Project not found")
     return ProjectRead.model_validate(project)
+
+
+@router.get("/{project_id}/regression-history", response_model=list[RegressionSummary])
+async def get_regression_history(
+    project_id: uuid.UUID,
+    db: AsyncSession = Depends(get_session),
+) -> list[RegressionSummary]:
+    sessions_result = await db.execute(
+        select(AnalysisSession)
+        .where(
+            AnalysisSession.project_id == project_id,
+            AnalysisSession.state == "completed",
+        )
+        .order_by(AnalysisSession.started_at.asc())
+    )
+    sessions = sessions_result.scalars().all()
+
+    summaries: list[RegressionSummary] = []
+    for s in sessions:
+        counts_result = await db.execute(
+            select(
+                Finding.regression_status,
+                func.count(Finding.id),
+            )
+            .where(Finding.session_id == s.id)
+            .group_by(Finding.regression_status)
+        )
+        count_map = {row[0]: row[1] for row in counts_result.all()}
+        new = count_map.get(RegressionStatus.NEW, 0)
+        recurring = count_map.get(RegressionStatus.RECURRING, 0)
+        resolved = count_map.get(RegressionStatus.RESOLVED, 0)
+        summaries.append(RegressionSummary(
+            session_id=s.id,
+            commit_sha=s.commit_sha,
+            started_at=s.started_at.isoformat(),
+            new=new,
+            recurring=recurring,
+            resolved=resolved,
+            total=new + recurring,
+        ))
+
+    return summaries
 
 
 @router.patch("/{project_id}", response_model=ProjectRead)

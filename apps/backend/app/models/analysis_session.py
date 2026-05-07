@@ -9,6 +9,12 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.models.base import Base, generate_uuid
 
 
+class SessionPriority(str, enum.Enum):
+    URGENT = "urgent"
+    NORMAL = "normal"
+    BACKGROUND = "background"
+
+
 class SessionState(str, enum.Enum):
     QUEUED = "queued"
     PREPARING = "preparing"
@@ -30,6 +36,7 @@ class AnalysisSession(Base):
     model_version: Mapped[str] = mapped_column(String(100))
     container_image_sha: Mapped[str | None] = mapped_column(String(100), default=None)
     state: Mapped[SessionState] = mapped_column(default=SessionState.QUEUED)
+    priority: Mapped[SessionPriority] = mapped_column(default=SessionPriority.NORMAL)
     started_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )

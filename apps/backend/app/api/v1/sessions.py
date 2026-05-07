@@ -60,6 +60,7 @@ async def create_session(
         agent_id=payload.agent_id,
         preset_id=payload.preset_id,
         model_version=f"{meta.name}-{meta.version}",
+        priority=payload.priority,
     )
     await db.commit()
     return SessionRead.model_validate(analysis)

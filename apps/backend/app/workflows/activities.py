@@ -117,6 +117,12 @@ async def post_process_findings(session_id: UUID, result: AnalysisResult) -> int
             analysis.token_usage = result.tokens_used
             analysis.cost = Decimal(str(result.cost_usd))
 
+        await session.flush()
+
+        if analysis is not None:
+            from app.services.regression import compute_regression_labels
+            await compute_regression_labels(session, session_id, analysis.project_id)
+
         await session.commit()
 
     activity.logger.info(

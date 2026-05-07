@@ -9,6 +9,7 @@ export interface Session {
   model_version: string;
   container_image_sha: string | null;
   state: 'queued' | 'preparing' | 'running' | 'post_processing' | 'completed' | 'failed' | 'canceled';
+  priority: 'urgent' | 'normal' | 'background';
   started_at: string;
   completed_at: string | null;
   token_usage: number;

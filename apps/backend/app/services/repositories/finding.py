@@ -1,9 +1,10 @@
 import uuid
+from datetime import datetime
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.finding import Finding
+from app.models.finding import Finding, RegressionStatus
 from app.models.finding_status import FindingStatus, VerificationStatus
 
 
@@ -16,6 +17,10 @@ class FindingRepository:
         session_id: uuid.UUID,
         *,
         severity: str | None = None,
+        category: str | None = None,
+        regression_status: str | None = None,
+        since: datetime | None = None,
+        until: datetime | None = None,
     ) -> list[Finding]:
         stmt = (
             select(Finding)
@@ -24,6 +29,14 @@ class FindingRepository:
         )
         if severity is not None:
             stmt = stmt.where(Finding.severity == severity)
+        if category is not None:
+            stmt = stmt.where(Finding.category == category)
+        if regression_status is not None:
+            stmt = stmt.where(Finding.regression_status == regression_status)
+        if since is not None:
+            stmt = stmt.where(Finding.created_at >= since)
+        if until is not None:
+            stmt = stmt.where(Finding.created_at <= until)
         result = await self._session.execute(stmt)
         return list(result.scalars().all())
 

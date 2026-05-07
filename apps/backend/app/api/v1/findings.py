@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -30,9 +31,20 @@ def _get_comment_repo(session: AsyncSession = Depends(get_session)) -> CommentRe
 async def list_findings(
     session_id: uuid.UUID,
     severity: str | None = Query(None),
+    category: str | None = Query(None),
+    regression_status: str | None = Query(None),
+    since: datetime | None = Query(None),
+    until: datetime | None = Query(None),
     repo: FindingRepository = Depends(_get_repo),
 ) -> list[FindingRead]:
-    findings = await repo.list_by_session(session_id, severity=severity)
+    findings = await repo.list_by_session(
+        session_id,
+        severity=severity,
+        category=category,
+        regression_status=regression_status,
+        since=since,
+        until=until,
+    )
     return [FindingRead.model_validate(f) for f in findings]
 
 

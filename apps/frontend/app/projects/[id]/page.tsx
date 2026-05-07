@@ -1,16 +1,23 @@
 'use client';
 
 import Link from 'next/link';
-import { use } from 'react';
+import { use, useState } from 'react';
 import { useProject } from '@/lib/hooks/use-projects';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { StatusBadge, PriorityBadge } from '@/components/status-badge';
 import { SessionList } from '@/components/session-list';
 import { NewSessionDialog } from '@/components/new-session-dialog';
+import { SessionHistory } from '@/components/session-history';
+import { RegressionTimeline } from '@/components/regression-timeline';
+import { cn } from '@/lib/utils';
+
+type Tab = 'sessions' | 'history' | 'regression';
 
 export default function ProjectDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const { data: project, isLoading, error } = useProject(id);
+  const [tab, setTab] = useState<Tab>('sessions');
 
   if (isLoading) {
     return (
@@ -58,15 +65,60 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-sm font-medium text-muted-foreground">분석 회차</CardTitle>
-          <NewSessionDialog projectId={id} />
-        </CardHeader>
-        <CardContent>
-          <SessionList projectId={id} />
-        </CardContent>
-      </Card>
+      <div className="flex gap-1 border-b">
+        {([
+          ['sessions', '분석 회차'],
+          ['history', '이력'],
+          ['regression', '회귀 추적'],
+        ] as const).map(([key, label]) => (
+          <Button
+            key={key}
+            variant="ghost"
+            size="sm"
+            className={cn(
+              'rounded-b-none',
+              tab === key && 'border-b-2 border-primary font-semibold',
+            )}
+            onClick={() => setTab(key)}
+          >
+            {label}
+          </Button>
+        ))}
+      </div>
+
+      {tab === 'sessions' && (
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-sm font-medium text-muted-foreground">분석 회차</CardTitle>
+            <NewSessionDialog projectId={id} />
+          </CardHeader>
+          <CardContent>
+            <SessionList projectId={id} />
+          </CardContent>
+        </Card>
+      )}
+
+      {tab === 'history' && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm font-medium text-muted-foreground">전체 이력</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <SessionHistory projectId={id} />
+          </CardContent>
+        </Card>
+      )}
+
+      {tab === 'regression' && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm font-medium text-muted-foreground">회귀 추적 타임라인</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <RegressionTimeline projectId={id} />
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
