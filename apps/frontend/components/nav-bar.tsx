@@ -17,7 +17,7 @@ export function NavBar() {
   return (
     <header className="border-b bg-background">
       <div className="mx-auto flex h-12 max-w-6xl items-center gap-6 px-6">
-        <Link href="/" className="font-bold text-lg tracking-tight">
+        <Link href="/" className="font-bold text-lg tracking-tight text-primary">
           SecureScope
         </Link>
         <nav className="flex items-center gap-1">
