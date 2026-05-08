@@ -4,7 +4,7 @@ from decimal import Decimal
 
 from pydantic import BaseModel
 
-from app.models.analysis_session import SessionPriority, SessionState
+from app.models.analysis_session import SessionPriority, SessionState, SessionType
 
 
 class SessionCreate(BaseModel):
@@ -14,6 +14,7 @@ class SessionCreate(BaseModel):
     preset_id: uuid.UUID
     agent_id: uuid.UUID
     priority: SessionPriority = SessionPriority.NORMAL
+    session_type: SessionType = SessionType.STATIC_ANALYSIS
 
 
 class SessionRead(BaseModel):
@@ -26,8 +27,11 @@ class SessionRead(BaseModel):
     preset_id: uuid.UUID
     model_version: str
     container_image_sha: str | None
+    session_type: SessionType
     state: SessionState
     priority: SessionPriority
+    current_phase: str | None
+    phase_data: dict | None
     started_at: datetime
     completed_at: datetime | None
     token_usage: int

@@ -4,7 +4,10 @@ import enum
 import uuid
 from typing import TYPE_CHECKING
 
+from typing import Any
+
 from sqlalchemy import ForeignKey, Integer, String, Text
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base, TimestampMixin, generate_uuid
@@ -44,6 +47,7 @@ class Finding(TimestampMixin, Base):
     title: Mapped[str] = mapped_column(String(500))
     description: Mapped[str] = mapped_column(Text)
     regression_status: Mapped[RegressionStatus] = mapped_column(default=RegressionStatus.NEW)
+    extras: Mapped[dict[str, Any] | None] = mapped_column(JSONB, default=None)
 
     session: Mapped[AnalysisSession] = relationship(back_populates="findings")  # noqa: F821
     statuses: Mapped[list[FindingStatus]] = relationship(back_populates="finding")  # noqa: F821

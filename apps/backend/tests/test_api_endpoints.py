@@ -10,7 +10,7 @@ from fastapi.testclient import TestClient
 from app.auth.dependencies import get_current_user
 from app.core.database import get_session
 from app.main import app
-from app.models.analysis_session import SessionPriority, SessionState
+from app.models.analysis_session import SessionPriority, SessionState, SessionType
 from app.models.finding import RegressionStatus, Severity
 from app.models.finding_status import VerificationStatus
 from app.models.project import Priority, ProjectStatus
@@ -69,8 +69,11 @@ def _mock_session(**overrides):
     s.preset_id = overrides.get("preset_id", uuid.uuid4())
     s.model_version = overrides.get("model_version", "test-v1")
     s.container_image_sha = overrides.get("container_image_sha")
+    s.session_type = overrides.get("session_type", SessionType.STATIC_ANALYSIS)
     s.state = overrides.get("state", SessionState.QUEUED)
     s.priority = overrides.get("priority", SessionPriority.NORMAL)
+    s.current_phase = overrides.get("current_phase", None)
+    s.phase_data = overrides.get("phase_data", None)
     s.started_at = _NOW
     s.completed_at = overrides.get("completed_at")
     s.token_usage = overrides.get("token_usage", 0)
@@ -91,6 +94,7 @@ def _mock_finding(**overrides):
     f.title = overrides.get("title", "XSS Vulnerability")
     f.description = overrides.get("description", "Reflected XSS")
     f.regression_status = overrides.get("regression_status", RegressionStatus.NEW)
+    f.extras = overrides.get("extras", None)
     f.created_at = _NOW
     f.updated_at = _NOW
     return f

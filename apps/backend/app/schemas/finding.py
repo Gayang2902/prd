@@ -21,6 +21,7 @@ class FindingRead(BaseModel):
     title: str
     description: str
     regression_status: RegressionStatus
+    extras: dict | None = None
     created_at: datetime
 
 
