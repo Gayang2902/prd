@@ -39,7 +39,6 @@ services:
       TEMPORAL_HOST: temporal:7233
       CORS_ORIGINS: '["http://localhost:13000"]'
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
-      CLAUDE_CMD: claude
       SKILLS_DIR: /skills
     volumes:
       - ~/.claude/skills:/skills:ro

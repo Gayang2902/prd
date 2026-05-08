@@ -3,11 +3,8 @@ FROM python:3.11-slim AS base
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    git curl \
+    git \
     libpango-1.0-0 libpangocairo-1.0-0 libgdk-pixbuf-2.0-0 libffi-dev libcairo2 \
-    && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
-    && apt-get install -y --no-install-recommends nodejs \
-    && npm install -g @anthropic-ai/claude-code \
     && rm -rf /var/lib/apt/lists/*
 
 COPY packages/shared-schemas /tmp/shared-schemas

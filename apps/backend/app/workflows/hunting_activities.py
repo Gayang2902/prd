@@ -1,4 +1,3 @@
-import asyncio
 import hashlib
 import json
 import os
@@ -7,14 +6,14 @@ from pathlib import Path
 from uuid import UUID
 
 import structlog
+from anthropic import AsyncAnthropic
 from temporalio import activity
-
-from app.core.config import settings
 
 logger = structlog.get_logger()
 
-CLAUDE_CMD = os.environ.get("CLAUDE_CMD", settings.claude_cmd)
 SKILLS_DIR = Path(os.environ.get("SKILLS_DIR", str(Path.home() / ".claude" / "skills")))
+MODEL = os.environ.get("HUNTING_MODEL", "claude-sonnet-4-20250514")
+MAX_TOKENS = 16384
 
 SKILL_BY_TYPE: dict[str, str] = {
     "target_discovery": "opentarget",
@@ -23,95 +22,26 @@ SKILL_BY_TYPE: dict[str, str] = {
 
 PHASE_PROMPTS: dict[str, dict[str, str]] = {
     "target_discovery": {
-        "gathering": (
-            "Phase 1 실행: 병렬 후보 수집. "
-            "Centralized MAS 패턴으로 3개 검색 경로에서 40~60개 후보를 수집하라. "
-            "에코시스템별 결과를 JSON 배열로 출력."
-        ),
-        "filtering": (
-            "Phase 2 실행: 빠른 필터링. "
-            "수집된 후보에서 규칙 위반 항목을 제거하라. "
-            "외부 입력 없음, 비활성, 대형 프레임워크 등을 필터. "
-            "남은 후보 목록을 JSON으로 출력."
-        ),
-        "scoring": (
-            "Phase 3 실행: Crackability 스코어링. "
-            "남은 후보 각각에 crackability 점수(1~10)를 매겨라. "
-            "네이티브 코드 가산, 보안 강화 감점, 단독 관리자 가산. "
-            "점수순 정렬 JSON 출력."
-        ),
-        "shortlisting": (
-            "Phase 4-6 실행: Patch-diff 분석 + 구조 분석 + 최종 선택. "
-            "상위 후보의 최근 패치를 분석하고 퍼징 전략을 수립하라. "
-            "primary 1개 + backup 2개를 선정. "
-            "최종 shortlist를 JSON으로 출력."
-        ),
-        "complete": (
-            "최종 보고서 작성. 선정된 타겟의 요약, crackability 점수, "
-            "추천 퍼징 전략, 진입점을 포함한 JSON 보고서 출력."
-        ),
+        "gathering": "Phase 1: 병렬 후보 수집. 3개 검색 경로에서 40~60개 후보 수집. JSON 배열 출력.",
+        "filtering": "Phase 2: 빠른 필터링. 규칙 위반 항목 제거. 남은 후보 JSON 출력.",
+        "scoring": "Phase 3: Crackability 스코어링(1~10). 점수순 정렬 JSON 출력.",
+        "shortlisting": "Phase 4-6: Patch-diff + 구조 분석 + 최종 선택. primary 1 + backup 2 선정. JSON 출력.",
+        "complete": "최종 보고서. 타겟 요약, crackability, 퍼징 전략, 진입점 포함 JSON 출력.",
     },
     "zero_day_hunting": {
-        "setup": (
-            "Phase 0 실행: 타겟 설정. "
-            "타겟 저장소를 분석하고 공격 표면을 식별하라. "
-            "파서, 입력 처리, 네이티브 바인딩 위치를 JSON으로 출력."
-        ),
-        "fuzzing": (
-            "Phase 1 실행: 병렬 퍼징. "
-            "Centralized MAS 패턴으로 3개 Worker가 동시 퍼징. "
-            "Worker당 동시 퍼징 1개, 메모리 가드 필수. "
-            "발견된 anomaly를 JSON 배열로 출력."
-        ),
-        "triage": (
-            "Phase 2 실행: Anomaly 트리아지. "
-            "퍼징에서 발견된 anomaly를 분류하라. "
-            "crash/leak/corruption/auth bypass 여부 판단. "
-            "유효 anomaly 목록을 JSON으로 출력."
-        ),
-        "code_reading": (
-            "Phase 3 실행: SAS 코드 리딩 (Opus 단독). "
-            "트리아지된 anomaly의 루트 코즈를 코드에서 분석하라. "
-            "취약점 경로, 영향 범위, 선행 조건을 JSON으로 출력."
-        ),
-        "bypass": (
-            "Phase 4 실행: 병렬 Bypass. "
-            "방어 메커니즘 발견 시 Centralized MAS 3-agent로 우회 시도. "
-            "각 bypass 경로와 성공 여부를 JSON으로 출력."
-        ),
-        "cross_verify": (
-            "Phase 5 실행: CCG 교차 검증. "
-            "Decentralized 패턴으로 다중 관점 검증. "
-            "각 finding의 재현 가능성, 임팩트, severity를 확정. "
-            "검증 결과를 JSON으로 출력."
-        ),
-        "complete": (
-            "Phase 6 실행: 최종 보고서. "
-            "검증된 finding의 PoC, 임팩트, 권고사항을 포함한 "
-            "JSON 보고서 출력."
-        ),
+        "setup": "Phase 0: 타겟 설정. 공격 표면 식별. 파서/입력/네이티브 바인딩 위치 JSON 출력.",
+        "fuzzing": "Phase 1: 병렬 퍼징. Worker당 동시 1개. anomaly JSON 배열 출력.",
+        "triage": "Phase 2: Anomaly 트리아지. crash/leak/corruption/auth bypass 분류. JSON 출력.",
+        "code_reading": "Phase 3: 코드 리딩. 루트 코즈, 취약점 경로, 영향 범위 JSON 출력.",
+        "bypass": "Phase 4: 병렬 Bypass 3-agent. bypass 경로와 성공 여부 JSON 출력.",
+        "cross_verify": "Phase 5: 교차 검증. 재현 가능성, 임팩트, severity 확정 JSON 출력.",
+        "complete": "Phase 6: 최종 보고서. PoC, 임팩트, 권고사항 JSON 출력.",
     },
 }
 
-
-def _build_prompt(session_type: str, phase: str, config: dict) -> str:
-    skill_name = SKILL_BY_TYPE[session_type]
-    skill_path = SKILLS_DIR / skill_name / "SKILL.md"
-    skill_content = ""
-    if skill_path.exists():
-        skill_content = skill_path.read_text()
-
-    phase_instruction = PHASE_PROMPTS.get(session_type, {}).get(phase, "")
-    config_str = json.dumps(config, ensure_ascii=False) if config else "{}"
-
-    return (
-        f"<skill>\n{skill_content}\n</skill>\n\n"
-        f"<phase>{phase}</phase>\n"
-        f"<config>{config_str}</config>\n\n"
-        f"{phase_instruction}\n\n"
-        "응답은 반드시 JSON 형식으로. "
-        '최상위에 "phase", "status", "results" 키를 포함하라.'
-    )
+OUTPUT_SCHEMA = (
+    '응답은 JSON만 출력: {"phase": "...", "status": "done", "results": [...]}'
+)
 
 
 @activity.defn(name="run_hunting_phase")
@@ -122,51 +52,43 @@ async def run_hunting_phase(
     config: dict,
     work_dir: str,
 ) -> dict:
-    prompt = _build_prompt(session_type, phase, config)
+    skill_name = SKILL_BY_TYPE.get(session_type, "opentarget")
+    skill_path = SKILLS_DIR / skill_name / "SKILL.md"
+    skill_content = skill_path.read_text() if skill_path.exists() else ""
 
-    cmd = [
-        CLAUDE_CMD,
-        "-p",
-        prompt,
-        "--output-format",
-        "json",
-        "--max-turns",
-        "50",
-    ]
+    phase_instruction = PHASE_PROMPTS.get(session_type, {}).get(phase, f"Phase '{phase}' 실행.")
 
-    activity.logger.info(
-        "Running hunting phase",
-        extra={"session_type": session_type, "phase": phase},
-    )
+    previous = config.get("previous_results", {})
+    prev_str = ""
+    if previous:
+        prev_str = f"\n<previous_results>\n{json.dumps(previous, ensure_ascii=False, default=str)[:8000]}\n</previous_results>"
 
-    proc = await asyncio.create_subprocess_exec(
-        *cmd,
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.PIPE,
-        cwd=work_dir,
-    )
-    stdout_bytes, stderr_bytes = await proc.communicate()
+    config_clean = {k: v for k, v in config.items() if k != "previous_results"}
+    config_str = json.dumps(config_clean, ensure_ascii=False) if config_clean else "{}"
 
-    if proc.returncode != 0:
-        err = stderr_bytes.decode(errors="replace")
-        activity.logger.error(
-            "Hunting phase failed",
-            extra={"phase": phase, "returncode": proc.returncode, "stderr": err[:500]},
-        )
-        return {"phase": phase, "status": "failed", "error": err[:2000]}
+    system_prompt = f"너는 보안 연구원이다. 아래 스킬 지침을 정확히 따라 실행하라.\n\n{skill_content}"
+    user_prompt = f"<config>{config_str}</config>\n<phase>{phase}</phase>{prev_str}\n\n{phase_instruction}\n\n{OUTPUT_SCHEMA}"
 
-    stdout_text = stdout_bytes.decode(errors="replace")
+    activity.logger.info("Running hunting phase via API", extra={"phase": phase, "model": MODEL})
+
+    client = AsyncAnthropic()
     try:
-        result = json.loads(stdout_text)
-        if "result" in result:
-            inner = result["result"]
-            try:
-                return json.loads(inner) if isinstance(inner, str) else inner
-            except (json.JSONDecodeError, TypeError):
-                return {"phase": phase, "status": "done", "raw": inner[:10000]}
+        response = await client.messages.create(
+            model=MODEL,
+            max_tokens=MAX_TOKENS,
+            system=system_prompt,
+            messages=[{"role": "user", "content": user_prompt}],
+        )
+        text = response.content[0].text if response.content else ""
+    except Exception as e:
+        activity.logger.error("API call failed", extra={"phase": phase, "error": str(e)})
+        return {"phase": phase, "status": "failed", "error": str(e)[:2000]}
+
+    try:
+        result = json.loads(text)
         return result
     except json.JSONDecodeError:
-        return {"phase": phase, "status": "done", "raw": stdout_text[:10000]}
+        return {"phase": phase, "status": "done", "raw": text[:10000]}
 
 
 def _fingerprint(text: str) -> str:
@@ -227,7 +149,10 @@ async def save_hunting_findings(
                     title = item.get("title", item.get("id", f"finding-{phase_name}"))
                     fp = _fingerprint(f"zeroday:{title}:{item.get('file_path', '')}")
                     sev_str = item.get("severity", "medium").lower()
-                    severity = Severity(sev_str) if sev_str in Severity.__members__.values() else Severity.MEDIUM
+                    try:
+                        severity = Severity(sev_str)
+                    except ValueError:
+                        severity = Severity.MEDIUM
                     finding = Finding(
                         session_id=session_id,
                         fingerprint=fp,
@@ -244,7 +169,6 @@ async def save_hunting_findings(
                             "poc_code": item.get("poc_code", ""),
                             "bypass_attempts": item.get("bypass_attempts", []),
                             "cross_verified": item.get("cross_verified", False),
-                            "anomaly_type": item.get("anomaly_type", ""),
                             "impact": item.get("impact", ""),
                         },
                     )
