@@ -23,44 +23,8 @@ import { NewHuntingDialog } from "@/components/new-hunting-dialog";
 import { PhasePipeline } from "@/components/phase-pipeline";
 import { useHuntingSessions } from "@/lib/hooks/use-hunting";
 import { useProjects } from "@/lib/hooks/use-projects";
-import { SESSION_TYPE_LABEL } from "@/lib/constants";
+import { SESSION_TYPE_LABEL, getPhaseConfig } from "@/lib/constants";
 import type { Session } from "@/lib/api/sessions";
-
-const TARGET_PHASES = [
-  "gathering",
-  "filtering",
-  "scoring",
-  "shortlisting",
-  "complete",
-];
-
-const TARGET_LABELS: Record<string, string> = {
-  gathering: "수집",
-  filtering: "필터링",
-  scoring: "스코어링",
-  shortlisting: "숏리스트",
-  complete: "완료",
-};
-
-const HUNTING_PHASES = [
-  "setup",
-  "fuzzing",
-  "triage",
-  "code_reading",
-  "bypass",
-  "cross_verify",
-  "complete",
-];
-
-const HUNTING_LABELS: Record<string, string> = {
-  setup: "셋업",
-  fuzzing: "퍼징",
-  triage: "트리아지",
-  code_reading: "코드 리딩",
-  bypass: "우회",
-  cross_verify: "교차 검증",
-  complete: "완료",
-};
 
 const STATE_VARIANT: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
   queued: "secondary",
@@ -71,13 +35,6 @@ const STATE_VARIANT: Record<string, "default" | "secondary" | "destructive" | "o
   failed: "destructive",
   canceled: "destructive",
 };
-
-function getPhaseConfig(session: Session) {
-  if (session.session_type === "target_discovery") {
-    return { order: TARGET_PHASES, labels: TARGET_LABELS };
-  }
-  return { order: HUNTING_PHASES, labels: HUNTING_LABELS };
-}
 
 export default function HuntingPage() {
   const { data: projects } = useProjects();

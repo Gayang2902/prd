@@ -21,25 +21,7 @@ import {
 import { LogStream } from "@/components/log-stream";
 import { PhasePipeline } from "@/components/phase-pipeline";
 import { StatCard } from "@/components/stat-card";
-import { SESSION_TYPE_LABEL } from "@/lib/constants";
-
-const TARGET_PHASES = ["gathering", "filtering", "scoring", "shortlisting", "complete"];
-const TARGET_LABELS: Record<string, string> = {
-  gathering: "수집", filtering: "필터링", scoring: "스코어링", shortlisting: "숏리스트", complete: "완료",
-};
-
-const HUNTING_PHASES = ["setup", "fuzzing", "triage", "code_reading", "bypass", "cross_verify", "complete"];
-const HUNTING_LABELS: Record<string, string> = {
-  setup: "셋업", fuzzing: "퍼징", triage: "트리아지", code_reading: "코드 리딩",
-  bypass: "우회", cross_verify: "교차 검증", complete: "완료",
-};
-
-function getPhaseConfig(session: Session) {
-  if (session.session_type === "target_discovery") {
-    return { order: TARGET_PHASES, labels: TARGET_LABELS };
-  }
-  return { order: HUNTING_PHASES, labels: HUNTING_LABELS };
-}
+import { SESSION_TYPE_LABEL, getPhaseConfig } from "@/lib/constants";
 
 function isHuntingSession(session: Session) {
   return session.session_type === "target_discovery" || session.session_type === "zero_day_hunting";
