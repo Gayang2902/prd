@@ -40,6 +40,9 @@ export function NewSessionDialog({ projectId }: Props) {
   const { data: presets } = usePresets();
 
   const agentList = agents ?? [];
+  const presetList = presets ?? [];
+  const selectedAgentName = agentList.find((a) => a.id === agentId)?.name;
+  const selectedPresetName = presetList.find((p) => p.id === presetId)?.name;
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -70,7 +73,9 @@ export function NewSessionDialog({ projectId }: Props) {
             <Label htmlFor="agent">에이전트</Label>
             <Select value={agentId} onValueChange={(v) => setAgentId(v ?? "")}>
               <SelectTrigger>
-                <SelectValue placeholder="에이전트 선택" />
+                <SelectValue placeholder="에이전트 선택">
+                  {selectedAgentName}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {agentList.map((a) => (
@@ -94,7 +99,9 @@ export function NewSessionDialog({ projectId }: Props) {
               onValueChange={(v) => setPresetId(v ?? "")}
             >
               <SelectTrigger>
-                <SelectValue placeholder="프리셋 선택" />
+                <SelectValue placeholder="프리셋 선택">
+                  {selectedPresetName}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {(presets ?? []).map((p) => (

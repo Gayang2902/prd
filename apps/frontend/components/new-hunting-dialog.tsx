@@ -86,7 +86,13 @@ export function NewHuntingDialog() {
   const { data: presets } = usePresets();
 
   const agentList = agents ?? [];
+  const presetList = presets ?? [];
+  const projectList = projects ?? [];
   const isPending = createTarget.isPending || createZeroDay.isPending;
+
+  const selectedProjectName = projectList.find((p) => p.id === projectId)?.name;
+  const selectedAgentName = agentList.find((a) => a.id === agentId)?.name;
+  const selectedPresetName = presetList.find((p) => p.id === presetId)?.name;
 
   const reset = () => {
     setStep("select");
@@ -263,10 +269,12 @@ export function NewHuntingDialog() {
               ) : (
                 <Select value={projectId} onValueChange={(v) => setProjectId(v ?? "")}>
                   <SelectTrigger>
-                    <SelectValue placeholder="프로젝트 선택" />
+                    <SelectValue placeholder="프로젝트 선택">
+                      {selectedProjectName}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
-                    {(projects ?? []).map((p) => (
+                    {projectList.map((p) => (
                       <SelectItem key={p.id} value={p.id}>
                         {p.name}
                       </SelectItem>
@@ -281,7 +289,9 @@ export function NewHuntingDialog() {
                 <Label>에이전트</Label>
                 <Select value={agentId} onValueChange={(v) => setAgentId(v ?? "")}>
                   <SelectTrigger>
-                    <SelectValue placeholder="에이전트 선택" />
+                    <SelectValue placeholder="에이전트 선택">
+                      {selectedAgentName}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     {agentList.map((a) => (
@@ -301,7 +311,9 @@ export function NewHuntingDialog() {
                 <Label>프리셋</Label>
                 <Select value={presetId} onValueChange={(v) => setPresetId(v ?? "")}>
                   <SelectTrigger>
-                    <SelectValue placeholder="프리셋 선택" />
+                    <SelectValue placeholder="프리셋 선택">
+                      {selectedPresetName}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     {(presets ?? []).map((p) => (
