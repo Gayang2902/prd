@@ -26,7 +26,9 @@ from app.workflows.activities import (
     cleanup_isolated_env,
     clone_repository,
     post_process_findings,
+    post_process_hunting_findings,
     provision_isolated_env,
+    record_hunting_phase,
     record_session_state,
     run_agent,
 )
@@ -371,6 +373,117 @@ async def test_post_process_findings_no_analysis(mock_activity: MagicMock) -> No
 
     assert count == 1
     mock_db.commit.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+@patch("app.workflows.activities.activity")
+async def test_record_hunting_phase(mock_activity: MagicMock) -> None:
+    sid = uuid.uuid4()
+    mock_repo = AsyncMock()
+    mock_db = AsyncMock()
+
+    @asynccontextmanager
+    async def fake_factory():
+        yield mock_db
+
+    with (
+        patch("app.core.database.async_session_factory", fake_factory),
+        patch(
+            "app.services.repositories.session.SessionRepository",
+            return_value=mock_repo,
+        ),
+    ):
+        await record_hunting_phase(sid, "gathering", "running")
+
+    mock_repo.update_phase_data.assert_awaited_once_with(sid, "gathering", "running")
+    mock_db.commit.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+@patch("app.workflows.activities.activity")
+async def test_post_process_hunting_findings_target_discovery(mock_activity: MagicMock) -> None:
+    sid = uuid.uuid4()
+    result = AnalysisResult(
+        findings=[_agent_finding(title="vuln-lib", file_path="repo/url")],
+        tokens_used=200,
+        cost_usd=1.5,
+        raw_output="ok",
+    )
+
+    mock_analysis = MagicMock()
+    mock_db = AsyncMock()
+    mock_db.add = MagicMock()
+    mock_db.get = AsyncMock(return_value=mock_analysis)
+    mock_db.commit = AsyncMock()
+
+    @asynccontextmanager
+    async def fake_factory():
+        yield mock_db
+
+    with (
+        patch("app.core.database.async_session_factory", fake_factory),
+        patch("app.services.fingerprint.compute_fingerprint", return_value="fp-hash"),
+    ):
+        count = await post_process_hunting_findings(sid, result, "target_discovery")
+
+    assert count == 1
+    mock_db.add.assert_called_once()
+    mock_db.commit.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+@patch("app.workflows.activities.activity")
+async def test_post_process_hunting_findings_zero_day(mock_activity: MagicMock) -> None:
+    sid = uuid.uuid4()
+    result = AnalysisResult(
+        findings=[
+            _agent_finding(title="overflow", category="crash"),
+            _agent_finding(title="uaf", category="memory"),
+        ],
+        tokens_used=300,
+        cost_usd=2.0,
+        raw_output="ok",
+    )
+
+    mock_analysis = MagicMock()
+    mock_db = AsyncMock()
+    mock_db.add = MagicMock()
+    mock_db.get = AsyncMock(return_value=mock_analysis)
+    mock_db.commit = AsyncMock()
+
+    @asynccontextmanager
+    async def fake_factory():
+        yield mock_db
+
+    with (
+        patch("app.core.database.async_session_factory", fake_factory),
+        patch("app.services.fingerprint.compute_fingerprint", return_value="fp-hash"),
+    ):
+        count = await post_process_hunting_findings(sid, result, "zero_day_hunting")
+
+    assert count == 2
+    assert mock_db.add.call_count == 2
+
+
+@pytest.mark.asyncio
+@patch("app.workflows.activities.activity")
+async def test_post_process_hunting_findings_no_analysis(mock_activity: MagicMock) -> None:
+    sid = uuid.uuid4()
+    result = AnalysisResult(findings=[], tokens_used=0, cost_usd=0.0, raw_output="empty")
+
+    mock_db = AsyncMock()
+    mock_db.add = MagicMock()
+    mock_db.get = AsyncMock(return_value=None)
+    mock_db.commit = AsyncMock()
+
+    @asynccontextmanager
+    async def fake_factory():
+        yield mock_db
+
+    with patch("app.core.database.async_session_factory", fake_factory):
+        count = await post_process_hunting_findings(sid, result, "target_discovery")
+
+    assert count == 0
 
 
 @pytest.mark.asyncio

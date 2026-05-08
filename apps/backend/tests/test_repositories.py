@@ -6,12 +6,14 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
+from app.models.analysis_session import SessionPriority, SessionType
 from app.models.finding_status import VerificationStatus
 from app.models.project import Priority, ProjectStatus
 from app.schemas.project import ProjectCreate, ProjectUpdate
 from app.services.repositories.comment import CommentRepository
 from app.services.repositories.finding import FindingRepository
 from app.services.repositories.project import ProjectRepository
+from app.services.repositories.session import SessionRepository
 from app.services.repositories.user import UserRepository
 
 
@@ -293,3 +295,87 @@ async def test_finding_get_status_history() -> None:
 
     history = await repo.get_status_history(uuid.uuid4())
     assert len(history) == 3
+
+
+# ── SessionRepository ──────────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_session_list_by_type() -> None:
+    db = AsyncMock()
+    db.execute = AsyncMock(return_value=_scalars_all(["s1", "s2"]))
+    repo = SessionRepository(db)
+
+    sessions = await repo.list_by_type(uuid.uuid4(), SessionType.TARGET_DISCOVERY)
+    assert len(sessions) == 2
+    db.execute.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_session_list_by_type_empty() -> None:
+    db = AsyncMock()
+    db.execute = AsyncMock(return_value=_scalars_all([]))
+    repo = SessionRepository(db)
+
+    sessions = await repo.list_by_type(uuid.uuid4(), SessionType.ZERO_DAY_HUNTING)
+    assert sessions == []
+
+
+@pytest.mark.asyncio
+async def test_session_create_with_hunting_fields() -> None:
+    db = _db()
+    repo = SessionRepository(db)
+
+    session = await repo.create(
+        project_id=uuid.uuid4(),
+        commit_sha="HEAD",
+        agent_id=uuid.uuid4(),
+        preset_id=uuid.uuid4(),
+        model_version="hunting-agent-0.1.0",
+        session_type=SessionType.TARGET_DISCOVERY,
+        phase_data={"config": {"skill": "opentarget"}, "phases": {}},
+    )
+    db.add.assert_called_once()
+    db.flush.assert_awaited_once()
+    assert session.session_type == SessionType.TARGET_DISCOVERY
+    assert session.phase_data is not None
+
+
+@pytest.mark.asyncio
+async def test_session_update_phase_data() -> None:
+    db = _db()
+    existing = MagicMock()
+    existing.phase_data = {"config": {}, "phases": {}}
+    db.get = AsyncMock(return_value=existing)
+    repo = SessionRepository(db)
+
+    result = await repo.update_phase_data(uuid.uuid4(), "gathering", "running")
+    assert result is not None
+    assert result.current_phase == "gathering"
+    assert result.phase_data["phases"]["gathering"]["status"] == "running"
+
+
+@pytest.mark.asyncio
+async def test_session_update_phase_data_with_extra() -> None:
+    db = _db()
+    existing = MagicMock()
+    existing.phase_data = {"config": {}, "phases": {"gathering": {"status": "done"}}}
+    db.get = AsyncMock(return_value=existing)
+    repo = SessionRepository(db)
+
+    result = await repo.update_phase_data(
+        uuid.uuid4(), "filtering", "running", {"progress": 50}
+    )
+    assert result.phase_data["phases"]["filtering"]["status"] == "running"
+    assert result.phase_data["phases"]["filtering"]["progress"] == 50
+    assert result.phase_data["phases"]["gathering"]["status"] == "done"
+
+
+@pytest.mark.asyncio
+async def test_session_update_phase_data_not_found() -> None:
+    db = _db()
+    db.get = AsyncMock(return_value=None)
+    repo = SessionRepository(db)
+
+    result = await repo.update_phase_data(uuid.uuid4(), "gathering", "running")
+    assert result is None
