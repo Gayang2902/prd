@@ -3,7 +3,7 @@ import uuid
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.analysis_session import AnalysisSession, SessionPriority, SessionState
+from app.models.analysis_session import AnalysisSession, SessionPriority, SessionState, SessionType
 
 VALID_TRANSITIONS: dict[SessionState, set[SessionState]] = {
     SessionState.QUEUED: {SessionState.PREPARING, SessionState.CANCELED},
@@ -73,6 +73,19 @@ class SessionRepository:
         result = await self._session.execute(stmt)
         return list(result.scalars().all())
 
+    async def list_by_type(
+        self, project_id: uuid.UUID, session_type: SessionType
+    ) -> list[AnalysisSession]:
+        result = await self._session.execute(
+            select(AnalysisSession)
+            .where(
+                AnalysisSession.project_id == project_id,
+                AnalysisSession.session_type == session_type,
+            )
+            .order_by(AnalysisSession.started_at.desc())
+        )
+        return list(result.scalars().all())
+
     async def create(
         self,
         *,
@@ -82,6 +95,8 @@ class SessionRepository:
         preset_id: uuid.UUID,
         model_version: str,
         priority: SessionPriority = SessionPriority.NORMAL,
+        session_type: SessionType = SessionType.STATIC_ANALYSIS,
+        phase_data: dict | None = None,
     ) -> AnalysisSession:
         analysis = AnalysisSession(
             project_id=project_id,
@@ -90,8 +105,29 @@ class SessionRepository:
             preset_id=preset_id,
             model_version=model_version,
             priority=priority,
+            session_type=session_type,
+            phase_data=phase_data,
         )
         self._session.add(analysis)
+        await self._session.flush()
+        return analysis
+
+    async def update_phase_data(
+        self,
+        session_id: uuid.UUID,
+        phase: str,
+        phase_status: str,
+        data: dict | None = None,
+    ) -> AnalysisSession | None:
+        analysis = await self.get(session_id)
+        if analysis is None:
+            return None
+        pd = dict(analysis.phase_data or {})
+        phases = pd.setdefault("phases", {})
+        phases[phase] = {"status": phase_status, **(data or {})}
+        pd["current_phase"] = phase
+        analysis.phase_data = pd
+        analysis.current_phase = phase
         await self._session.flush()
         return analysis
 

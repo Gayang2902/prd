@@ -3,6 +3,7 @@ from fastapi import APIRouter
 from app.api.v1.audit import router as audit_router
 from app.api.v1.findings import router as findings_router
 from app.api.v1.health import router as health_router
+from app.api.v1.hunting import router as hunting_router
 from app.api.v1.presets import router as presets_router
 from app.api.v1.projects import router as projects_router
 from app.api.v1.queue import router as queue_router
@@ -22,3 +23,4 @@ api_router.include_router(reports_router)
 api_router.include_router(queue_router)
 api_router.include_router(usage_router)
 api_router.include_router(audit_router)
+api_router.include_router(hunting_router)
