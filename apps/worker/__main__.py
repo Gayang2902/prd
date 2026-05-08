@@ -16,6 +16,7 @@ from app.workflows.activities import (
     record_session_state,
     run_agent,
 )
+from app.workflows.hunting_activities import run_hunting_phase, save_hunting_findings
 
 TEMPORAL_HOST = os.getenv("TEMPORAL_HOST", "localhost:7233")
 TASK_QUEUE = "analysis-queue"
@@ -36,6 +37,8 @@ async def main() -> None:
             cleanup_isolated_env,
             record_session_state,
             record_hunting_phase,
+            run_hunting_phase,
+            save_hunting_findings,
         ],
     )
     print(f"Worker started on queue={TASK_QUEUE}, temporal={TEMPORAL_HOST}")

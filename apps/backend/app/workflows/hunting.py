@@ -9,13 +9,46 @@ with workflow.unsafe.imports_passed_through():
     from app.workflows.activities import (
         cleanup_isolated_env,
         clone_repository,
-        post_process_hunting_findings,
         provision_isolated_env,
         record_hunting_phase,
         record_session_state,
-        run_agent,
     )
+    from app.workflows.hunting_activities import run_hunting_phase
     from app.workflows.models import EnvHandle, HuntingContext
+
+
+_PHASES_BY_TYPE: dict[str, list[str]] = {
+    SessionType.TARGET_DISCOVERY.value: [
+        "gathering",
+        "filtering",
+        "scoring",
+        "shortlisting",
+        "complete",
+    ],
+    SessionType.ZERO_DAY_HUNTING.value: [
+        "setup",
+        "fuzzing",
+        "triage",
+        "code_reading",
+        "bypass",
+        "cross_verify",
+        "complete",
+    ],
+}
+
+_PHASE_TIMEOUTS: dict[str, int] = {
+    "gathering": 2700,
+    "filtering": 900,
+    "scoring": 1200,
+    "shortlisting": 1200,
+    "setup": 300,
+    "fuzzing": 2700,
+    "triage": 600,
+    "code_reading": 1800,
+    "bypass": 1800,
+    "cross_verify": 900,
+    "complete": 600,
+}
 
 
 @workflow.defn(name="HuntingWorkflow")
@@ -27,14 +60,12 @@ class HuntingWorkflow:
             initial_interval=timedelta(seconds=10),
             maximum_interval=timedelta(minutes=2),
         )
-        agent_retry = RetryPolicy(
-            maximum_attempts=2,
-            initial_interval=timedelta(seconds=30),
-        )
         short = timedelta(seconds=10)
 
         phases = _PHASES_BY_TYPE[ctx.session_type]
+        config = (ctx.analysis_context.preset.ruleset or {})
         env_handle: EnvHandle | None = None
+        phase_results: dict[str, dict] = {}
 
         try:
             await workflow.execute_activity(
@@ -69,19 +100,32 @@ class HuntingWorkflow:
                     start_to_close_timeout=short,
                 )
 
+                timeout_sec = _PHASE_TIMEOUTS.get(phase, 1800)
+                phase_config = {**config, "previous_results": phase_results}
+
                 result = await workflow.execute_activity(
-                    run_agent,
-                    args=[env_handle, ctx.analysis_context],
-                    start_to_close_timeout=timedelta(
-                        seconds=ctx.analysis_context.limits.max_runtime_seconds,
+                    run_hunting_phase,
+                    args=[
+                        ctx.session_id,
+                        ctx.session_type,
+                        phase,
+                        phase_config,
+                        env_handle.work_dir,
+                    ],
+                    start_to_close_timeout=timedelta(seconds=timeout_sec),
+                    heartbeat_timeout=timedelta(seconds=120),
+                    retry_policy=RetryPolicy(
+                        maximum_attempts=2,
+                        initial_interval=timedelta(seconds=30),
                     ),
-                    heartbeat_timeout=timedelta(seconds=60),
-                    retry_policy=agent_retry,
                 )
 
+                phase_results[phase] = result
+
+                status = result.get("status", "done") if isinstance(result, dict) else "done"
                 await workflow.execute_activity(
                     record_hunting_phase,
-                    args=[ctx.session_id, phase, "done"],
+                    args=[ctx.session_id, phase, status],
                     start_to_close_timeout=short,
                 )
 
@@ -90,12 +134,8 @@ class HuntingWorkflow:
                 args=[ctx.session_id, SessionState.POST_PROCESSING],
                 start_to_close_timeout=short,
             )
-            await workflow.execute_activity(
-                post_process_hunting_findings,
-                args=[ctx.session_id, result, ctx.session_type],
-                start_to_close_timeout=timedelta(minutes=2),
-                retry_policy=default_retry,
-            )
+
+            await _save_hunting_results(ctx, phase_results)
 
             await workflow.execute_activity(
                 record_session_state,
@@ -133,21 +173,15 @@ class HuntingWorkflow:
                     workflow.logger.error("Cleanup failed", exc_info=True)
 
 
-_PHASES_BY_TYPE: dict[str, list[str]] = {
-    SessionType.TARGET_DISCOVERY.value: [
-        "gathering",
-        "filtering",
-        "scoring",
-        "shortlisting",
-        "complete",
-    ],
-    SessionType.ZERO_DAY_HUNTING.value: [
-        "setup",
-        "fuzzing",
-        "triage",
-        "code_reading",
-        "bypass",
-        "cross_verify",
-        "complete",
-    ],
-}
+async def _save_hunting_results(ctx: HuntingContext, phase_results: dict) -> None:
+    from app.workflows.hunting_activities import save_hunting_findings
+
+    await workflow.execute_activity(
+        save_hunting_findings,
+        args=[ctx.session_id, ctx.session_type, phase_results],
+        start_to_close_timeout=timedelta(minutes=2),
+        retry_policy=RetryPolicy(
+            maximum_attempts=3,
+            initial_interval=timedelta(seconds=10),
+        ),
+    )

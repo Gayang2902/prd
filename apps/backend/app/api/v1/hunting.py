@@ -2,10 +2,17 @@ import uuid
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from securescope_schemas.agent_interface import (
+    AnalysisContext,
+    CodeScope,
+    PresetConfig,
+    ResourceLimits,
+)
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import Role, require_role
 from app.core.database import get_session
+from app.core.temporal import get_temporal_client
 from app.models.analysis_session import SessionType
 from app.schemas.analysis_session import SessionRead
 from app.schemas.finding import FindingRead
@@ -13,6 +20,7 @@ from app.schemas.hunting import HuntingSessionCreate, PhaseUpdate
 from app.services.agent_registry import get_registry
 from app.services.repositories.finding import FindingRepository
 from app.services.repositories.session import SessionRepository
+from app.workflows.models import HuntingContext
 
 router = APIRouter(prefix="/hunting", tags=["hunting"])
 
@@ -54,6 +62,38 @@ async def _create_hunting_session(
         phase_data=initial_phase_data,
     )
     await db.commit()
+
+    hunting_ctx = HuntingContext(
+        session_id=analysis.id,
+        session_type=session_type.value,
+        scope=CodeScope(
+            repo_path=str(analysis.project_id),
+            commit_sha=analysis.commit_sha,
+        ),
+        analysis_context=AnalysisContext(
+            session_id=analysis.id,
+            scope=CodeScope(
+                repo_path=str(analysis.project_id),
+                commit_sha=analysis.commit_sha,
+            ),
+            preset=PresetConfig(
+                id=analysis.preset_id,
+                version_sha="latest",
+                prompt_template="hunting",
+                ruleset=payload.config,
+            ),
+            limits=ResourceLimits(),
+        ),
+    )
+
+    client = await get_temporal_client()
+    await client.start_workflow(
+        "HuntingWorkflow",
+        hunting_ctx,
+        id=f"hunting-{analysis.id}",
+        task_queue="analysis-queue",
+    )
+
     return SessionRead.model_validate(analysis)
 
 
