@@ -56,6 +56,6 @@ export function cancelSession(sessionId: string): Promise<Session> {
 
 export function getLogsUrl(sessionId: string): string {
   const base =
-    process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
+    process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:18000/api/v1";
   return `${base}/sessions/${sessionId}/logs`;
 }

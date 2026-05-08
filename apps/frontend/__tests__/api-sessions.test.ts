@@ -54,6 +54,6 @@ describe("sessions API", () => {
 
   it("getLogsUrl returns SSE URL", () => {
     const url = getLogsUrl("s1");
-    expect(url).toBe("http://localhost:8000/api/v1/sessions/s1/logs");
+    expect(url).toBe("http://localhost:18000/api/v1/sessions/s1/logs");
   });
 });

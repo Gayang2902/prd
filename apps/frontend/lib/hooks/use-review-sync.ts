@@ -22,7 +22,7 @@ export function useReviewSync(sessionId: string) {
   const [activeUsers, setActiveUsers] = useState<string[]>([]);
 
   useEffect(() => {
-    const base = process.env.NEXT_PUBLIC_WS_URL ?? "ws://localhost:8000";
+    const base = process.env.NEXT_PUBLIC_WS_URL ?? "ws://localhost:18000";
     const ws = new WebSocket(
       `${base}/ws/sessions/${sessionId}?user_id=current`,
     );

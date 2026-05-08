@@ -31,7 +31,7 @@ export function ReportExportModal({ sessionId }: Props) {
     setLoading(true);
     try {
       const base =
-        process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
+        process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:18000/api/v1";
       const res = await fetch(
         `${base}/sessions/${sessionId}/reports?format=${format}`,
         {

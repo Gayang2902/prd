@@ -17,7 +17,7 @@ describe("apiFetch", () => {
 
     const result = await apiFetch("/health");
     expect(mockFetch).toHaveBeenCalledWith(
-      "http://localhost:8000/api/v1/health",
+      "http://localhost:18000/api/v1/health",
       expect.objectContaining({
         headers: expect.objectContaining({
           "Content-Type": "application/json",
