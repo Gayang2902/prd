@@ -35,6 +35,7 @@ dev = [
 
 [project.entry-points."securescope.agents"]
 mcp-finding = "app.agents.mcp_finding_agent:McpFindingAgent"
+hunting = "app.agents.hunting_agent:HuntingAgent"
 
 [build-system]
 requires = ["hatchling"]

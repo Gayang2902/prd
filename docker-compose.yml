@@ -38,6 +38,11 @@ services:
       REDIS_URL: redis://redis:6379/0
       TEMPORAL_HOST: temporal:7233
       CORS_ORIGINS: '["http://localhost:13000"]'
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      CLAUDE_CMD: claude
+      SKILLS_DIR: /skills
+    volumes:
+      - ~/.claude/skills:/skills:ro
     healthcheck:
       test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health')\""]
       interval: 10s

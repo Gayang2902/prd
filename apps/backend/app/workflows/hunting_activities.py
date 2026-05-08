@@ -14,7 +14,7 @@ from app.core.config import settings
 logger = structlog.get_logger()
 
 CLAUDE_CMD = os.environ.get("CLAUDE_CMD", settings.claude_cmd)
-SKILLS_DIR = Path.home() / ".claude" / "skills"
+SKILLS_DIR = Path(os.environ.get("SKILLS_DIR", str(Path.home() / ".claude" / "skills")))
 
 SKILL_BY_TYPE: dict[str, str] = {
     "target_discovery": "opentarget",
