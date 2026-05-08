@@ -12,6 +12,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
+const TYPE_LABELS: Record<string, string> = {
+  static_analysis: "정적 분석",
+  target_discovery: "타겟 디스커버리",
+  zero_day_hunting: "제로데이 헌팅",
+};
+
 const STATE_LABELS: Record<
   string,
   {
@@ -46,6 +52,7 @@ export function SessionList({ projectId }: { projectId: string }) {
       <TableHeader>
         <TableRow>
           <TableHead>회차</TableHead>
+          <TableHead>유형</TableHead>
           <TableHead>커밋</TableHead>
           <TableHead>상태</TableHead>
           <TableHead>모델</TableHead>
@@ -69,6 +76,9 @@ export function SessionList({ projectId }: { projectId: string }) {
                 >
                   #{sessions.length - i}
                 </Link>
+              </TableCell>
+              <TableCell className="text-xs">
+                {TYPE_LABELS[s.session_type] ?? s.session_type}
               </TableCell>
               <TableCell className="font-mono text-xs">
                 {s.commit_sha.slice(0, 7)}
