@@ -1,5 +1,7 @@
 import { apiFetch } from "./client";
 
+export type SessionType = "static_analysis" | "target_discovery" | "zero_day_hunting";
+
 export interface Session {
   id: string;
   project_id: string;
@@ -8,6 +10,7 @@ export interface Session {
   preset_id: string;
   model_version: string;
   container_image_sha: string | null;
+  session_type: SessionType;
   state:
     | "queued"
     | "preparing"
@@ -17,6 +20,8 @@ export interface Session {
     | "failed"
     | "canceled";
   priority: "urgent" | "normal" | "background";
+  current_phase: string | null;
+  phase_data: Record<string, unknown> | null;
   started_at: string;
   completed_at: string | null;
   token_usage: number;

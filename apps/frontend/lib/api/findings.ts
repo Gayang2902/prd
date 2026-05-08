@@ -12,6 +12,7 @@ export interface Finding {
   title: string;
   description: string;
   regression_status: "new" | "recurring" | "resolved" | "carried_over";
+  extras: Record<string, unknown> | null;
   created_at: string;
 }
 

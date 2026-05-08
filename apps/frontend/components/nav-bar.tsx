@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
   { href: "/projects", label: "프로젝트" },
+  { href: "/hunting", label: "헌팅" },
   { href: "/queue", label: "큐" },
   { href: "/presets", label: "프리셋" },
   { href: "/settings/usage", label: "설정" },
