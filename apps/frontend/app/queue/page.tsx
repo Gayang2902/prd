@@ -13,12 +13,7 @@ import {
 } from "@/components/ui/table";
 import { PriorityBadge } from "@/components/status-badge";
 import { useQueue } from "@/lib/hooks/use-queue";
-
-const TYPE_LABEL: Record<string, string> = {
-  static_analysis: "정적 분석",
-  target_discovery: "타겟 디스커버리",
-  zero_day_hunting: "제로데이 헌팅",
-};
+import { SESSION_TYPE_LABEL } from "@/lib/constants";
 
 const STATE_LABEL: Record<
   string,
@@ -126,7 +121,7 @@ export default function QueuePage() {
                         </Link>
                       </TableCell>
                       <TableCell className="text-xs">
-                        {TYPE_LABEL[s.session_type] ?? s.session_type}
+                        {SESSION_TYPE_LABEL[s.session_type] ?? s.session_type}
                       </TableCell>
                       <TableCell>
                         <Badge variant={stateConfig.variant}>

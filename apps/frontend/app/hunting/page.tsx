@@ -23,12 +23,8 @@ import { NewHuntingDialog } from "@/components/new-hunting-dialog";
 import { PhasePipeline } from "@/components/phase-pipeline";
 import { useHuntingSessions } from "@/lib/hooks/use-hunting";
 import { useProjects } from "@/lib/hooks/use-projects";
+import { SESSION_TYPE_LABEL } from "@/lib/constants";
 import type { Session } from "@/lib/api/sessions";
-
-const TYPE_LABEL: Record<string, string> = {
-  target_discovery: "타겟 디스커버리",
-  zero_day_hunting: "제로데이 헌팅",
-};
 
 const TARGET_PHASES = [
   "gathering",
@@ -181,7 +177,7 @@ export default function HuntingPage() {
                     </Link>
                     <div className="flex items-center gap-2">
                       <Badge variant="outline">
-                        {TYPE_LABEL[s.session_type] ?? s.session_type}
+                        {SESSION_TYPE_LABEL[s.session_type] ?? s.session_type}
                       </Badge>
                       <Badge variant={STATE_VARIANT[s.state] ?? "outline"}>
                         {s.state}
@@ -239,7 +235,7 @@ export default function HuntingPage() {
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline">
-                        {TYPE_LABEL[s.session_type] ?? s.session_type}
+                        {SESSION_TYPE_LABEL[s.session_type] ?? s.session_type}
                       </Badge>
                     </TableCell>
                     <TableCell>

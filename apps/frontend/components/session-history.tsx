@@ -11,12 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useSessions } from "@/lib/hooks/use-sessions";
-
-const TYPE_LABEL: Record<string, string> = {
-  static_analysis: "정적 분석",
-  target_discovery: "타겟 디스커버리",
-  zero_day_hunting: "제로데이 헌팅",
-};
+import { SESSION_TYPE_LABEL } from "@/lib/constants";
 
 const STATE_LABEL: Record<string, string> = {
   queued: "대기",
@@ -70,7 +65,7 @@ export function SessionHistory({ projectId }: Props) {
               </Link>
             </TableCell>
             <TableCell className="text-xs">
-              {TYPE_LABEL[s.session_type] ?? s.session_type}
+              {SESSION_TYPE_LABEL[s.session_type] ?? s.session_type}
             </TableCell>
             <TableCell>
               <Badge

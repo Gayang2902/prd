@@ -21,12 +21,7 @@ import {
 import { LogStream } from "@/components/log-stream";
 import { PhasePipeline } from "@/components/phase-pipeline";
 import { StatCard } from "@/components/stat-card";
-
-const TYPE_LABEL: Record<string, string> = {
-  static_analysis: "정적 분석",
-  target_discovery: "타겟 디스커버리",
-  zero_day_hunting: "제로데이 헌팅",
-};
+import { SESSION_TYPE_LABEL } from "@/lib/constants";
 
 const TARGET_PHASES = ["gathering", "filtering", "scoring", "shortlisting", "complete"];
 const TARGET_LABELS: Record<string, string> = {
@@ -189,7 +184,7 @@ export default function SessionDetailPage({
         </div>
         <div className="flex items-center gap-3">
           <h1 className="text-2xl font-bold">
-            {isHuntingSession(session) ? TYPE_LABEL[session.session_type] : "분석 회차"}
+            {isHuntingSession(session) ? SESSION_TYPE_LABEL[session.session_type] : "분석 회차"}
           </h1>
           <Badge
             variant={

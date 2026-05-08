@@ -11,12 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-
-const TYPE_LABELS: Record<string, string> = {
-  static_analysis: "정적 분석",
-  target_discovery: "타겟 디스커버리",
-  zero_day_hunting: "제로데이 헌팅",
-};
+import { SESSION_TYPE_LABEL } from "@/lib/constants";
 
 const STATE_LABELS: Record<
   string,
@@ -78,7 +73,7 @@ export function SessionList({ projectId }: { projectId: string }) {
                 </Link>
               </TableCell>
               <TableCell className="text-xs">
-                {TYPE_LABELS[s.session_type] ?? s.session_type}
+                {SESSION_TYPE_LABEL[s.session_type] ?? s.session_type}
               </TableCell>
               <TableCell className="font-mono text-xs">
                 {s.commit_sha.slice(0, 7)}
