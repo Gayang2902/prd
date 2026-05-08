@@ -11,6 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { NewHuntingDialog } from "@/components/new-hunting-dialog";
 import { PhasePipeline } from "@/components/phase-pipeline";
 import { useHuntingSessions } from "@/lib/hooks/use-hunting";
 import { useProjects } from "@/lib/hooks/use-projects";
@@ -88,11 +89,14 @@ export default function HuntingPage() {
 
   return (
     <div className="mx-auto max-w-6xl p-6 space-y-6">
-      <div className="space-y-1">
-        <h1 className="text-3xl font-bold">헌팅</h1>
-        <p className="text-sm text-muted-foreground">
-          타겟 디스커버리 & 제로데이 헌팅 세션 관리
-        </p>
+      <div className="flex items-center justify-between">
+        <div className="space-y-1">
+          <h1 className="text-3xl font-bold">헌팅</h1>
+          <p className="text-sm text-muted-foreground">
+            타겟 디스커버리 & 제로데이 헌팅 세션 관리
+          </p>
+        </div>
+        <NewHuntingDialog />
       </div>
 
       <div className="grid grid-cols-3 gap-4">

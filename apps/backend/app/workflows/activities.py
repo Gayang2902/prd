@@ -135,6 +135,75 @@ async def post_process_findings(session_id: UUID, result: AnalysisResult) -> int
     return count
 
 
+@activity.defn(name="record_hunting_phase")
+async def record_hunting_phase(
+    session_id: UUID, phase: str, phase_status: str
+) -> None:
+    from app.core.database import async_session_factory
+    from app.services.repositories.session import SessionRepository
+
+    async with async_session_factory() as session:
+        repo = SessionRepository(session)
+        await repo.update_phase_data(session_id, phase, phase_status)
+        await session.commit()
+
+    activity.logger.info(
+        "Phase updated",
+        extra={"phase": phase, "status": phase_status},
+    )
+
+
+@activity.defn(name="post_process_hunting_findings")
+async def post_process_hunting_findings(
+    session_id: UUID, result: AnalysisResult, session_type: str
+) -> int:
+    from app.core.database import async_session_factory
+    from app.models.analysis_session import AnalysisSession, SessionType
+    from app.models.finding import Finding, RegressionStatus, Severity
+    from app.services.fingerprint import compute_fingerprint
+
+    count = 0
+    async with async_session_factory() as session:
+        for af in result.findings:
+            fp = compute_fingerprint(af.file_path, af.code_snippet, af.category)
+            extras: dict = {}
+            if session_type == SessionType.TARGET_DISCOVERY.value:
+                extras["crackability_score"] = getattr(af, "score", 0)
+                category = "target_candidate"
+            else:
+                extras["anomaly_type"] = af.category
+                category = af.category
+
+            finding = Finding(
+                session_id=session_id,
+                fingerprint=fp,
+                file_path=af.file_path,
+                line_start=af.line_start,
+                line_end=af.line_end,
+                severity=Severity(af.severity.value),
+                category=category,
+                title=af.title,
+                description=af.description,
+                regression_status=RegressionStatus.NEW,
+                extras=extras,
+            )
+            session.add(finding)
+            count += 1
+
+        analysis = await session.get(AnalysisSession, session_id)
+        if analysis is not None:
+            analysis.token_usage = result.tokens_used
+            analysis.cost = Decimal(str(result.cost_usd))
+
+        await session.commit()
+
+    activity.logger.info(
+        "Saved hunting findings",
+        extra={"count": count, "session_type": session_type},
+    )
+    return count
+
+
 @activity.defn(name="cleanup_isolated_env")
 async def cleanup_isolated_env(env: EnvHandle) -> None:
     from app.services.k8s import delete_analysis_pod
