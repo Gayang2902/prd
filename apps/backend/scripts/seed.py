@@ -20,6 +20,7 @@ LEAD_ID = uuid.UUID("00000000-0000-0000-0000-000000000002")
 REVIEWER_ID = uuid.UUID("00000000-0000-0000-0000-000000000003")
 AGENT_ID = uuid.UUID("00000000-0000-0000-0000-000000000010")
 HUNTING_AGENT_ID = uuid.UUID("00000000-0000-0000-0000-000000000011")
+CLAUDE_CODE_AGENT_ID = uuid.UUID("00000000-0000-0000-0000-000000000012")
 
 
 async def seed() -> None:
@@ -53,12 +54,43 @@ async def seed() -> None:
             version="1.0.0",
             metadata_={"description": "Anthropic API 직접 호출 — opentarget/openresearch 스킬 기반 헌팅"},
         )
+        claude_code_agent = Agent(
+            id=CLAUDE_CODE_AGENT_ID,
+            name="claude-code",
+            version="1.0.0",
+            metadata_={"description": "Claude Code CLI 직접 실행 — 하위 쉘에서 코드 분석 및 헌팅 수행"},
+        )
         session.add(agent)
         session.add(hunting_agent)
+        session.add(claude_code_agent)
 
         for bp in BUILTIN_PRESETS:
             preset = Preset(agent_id=AGENT_ID, **bp)
             session.add(preset)
+
+        hunting_presets = [
+            Preset(
+                agent_id=HUNTING_AGENT_ID,
+                name="OpenTarget 헌팅",
+                version_sha="builtin-v1",
+                prompt_template="opentarget 스킬 기반 타겟 디스커버리 파이프라인",
+                ruleset={"skill": "opentarget", "session_type": "target_discovery"},
+                timeout_seconds=3600,
+                max_retries=2,
+                is_shared=True,
+            ),
+            Preset(
+                agent_id=HUNTING_AGENT_ID,
+                name="OpenResearch 헌팅",
+                version_sha="builtin-v1",
+                prompt_template="openresearch 스킬 기반 제로데이 헌팅 파이프라인",
+                ruleset={"skill": "openresearch", "session_type": "zero_day_hunting"},
+                timeout_seconds=7200,
+                max_retries=2,
+                is_shared=True,
+            ),
+        ]
+        session.add_all(hunting_presets)
 
         project = Project(
             name="sample-webapp",
@@ -68,7 +100,8 @@ async def seed() -> None:
         session.add(project)
 
         await session.commit()
-        print(f"Seeded: 3 users, 2 agents, {len(BUILTIN_PRESETS)} presets, 1 project")
+        total_presets = len(BUILTIN_PRESETS) + len(hunting_presets)
+        print(f"Seeded: 3 users, 3 agents, {total_presets} presets, 1 project")
         print(f"Admin user ID: {ADMIN_ID}")
         print(f"Use header: X-User-Id: {ADMIN_ID}")
 

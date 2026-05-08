@@ -7,7 +7,7 @@ import {
 } from "@/lib/hooks/use-hunting";
 import { useAgents } from "@/lib/hooks/use-agents";
 import { usePresets } from "@/lib/hooks/use-presets";
-import { useProjects } from "@/lib/hooks/use-projects";
+import { useProjects, useCreateProject } from "@/lib/hooks/use-projects";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -69,14 +69,18 @@ export function NewHuntingDialog() {
   const [projectId, setProjectId] = useState("");
   const [agentId, setAgentId] = useState("");
   const [presetId, setPresetId] = useState("");
-  const [commitSha, setCommitSha] = useState("");
   const [keyword, setKeyword] = useState("");
   const [ecosystem, setEcosystem] = useState("");
   const [targetRepo, setTargetRepo] = useState("");
   const [fuzzingWorkers, setFuzzingWorkers] = useState("3");
 
+  const [showNewProject, setShowNewProject] = useState(false);
+  const [newProjectName, setNewProjectName] = useState("");
+  const [newProjectRepo, setNewProjectRepo] = useState("");
+
   const createTarget = useCreateTargetDiscovery();
   const createZeroDay = useCreateZeroDayHunt();
+  const createProject = useCreateProject();
   const { data: projects } = useProjects();
   const { data: agents } = useAgents();
   const { data: presets } = usePresets();
@@ -86,16 +90,30 @@ export function NewHuntingDialog() {
 
   const reset = () => {
     setStep("select");
-    setCommitSha("");
     setKeyword("");
     setEcosystem("");
     setTargetRepo("");
     setFuzzingWorkers("3");
+    setShowNewProject(false);
+    setNewProjectName("");
+    setNewProjectRepo("");
   };
 
   const handleSelect = (type: HuntingType) => {
     setHuntingType(type);
     setStep("configure");
+  };
+
+  const handleCreateProject = async () => {
+    if (!newProjectName || !newProjectRepo) return;
+    const project = await createProject.mutateAsync({
+      name: newProjectName,
+      gitlab_project_id: newProjectRepo,
+    });
+    setProjectId(project.id);
+    setShowNewProject(false);
+    setNewProjectName("");
+    setNewProjectRepo("");
   };
 
   const handleSubmit = async (e: FormEvent) => {
@@ -116,7 +134,6 @@ export function NewHuntingDialog() {
       project_id: projectId,
       preset_id: presetId || "00000000-0000-0000-0000-000000000001",
       agent_id: agentId || "00000000-0000-0000-0000-000000000011",
-      commit_sha: commitSha || null,
       config,
     };
 
@@ -209,19 +226,54 @@ export function NewHuntingDialog() {
             </Button>
 
             <div className="space-y-2">
-              <Label>프로젝트</Label>
-              <Select value={projectId} onValueChange={(v) => setProjectId(v ?? "")}>
-                <SelectTrigger>
-                  <SelectValue placeholder="프로젝트 선택" />
-                </SelectTrigger>
-                <SelectContent>
-                  {(projects ?? []).map((p) => (
-                    <SelectItem key={p.id} value={p.id}>
-                      {p.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="flex items-center justify-between">
+                <Label>프로젝트</Label>
+                <button
+                  type="button"
+                  onClick={() => setShowNewProject(!showNewProject)}
+                  className="text-[10px] text-[#8be9fd] hover:underline"
+                >
+                  {showNewProject ? "기존 프로젝트 선택" : "+ 새 프로젝트"}
+                </button>
+              </div>
+              {showNewProject ? (
+                <div className="space-y-2 rounded-lg border border-[#44475a] p-3">
+                  <Input
+                    value={newProjectName}
+                    onChange={(e) => setNewProjectName(e.target.value)}
+                    placeholder="프로젝트 이름"
+                    className="h-8 text-xs"
+                  />
+                  <Input
+                    value={newProjectRepo}
+                    onChange={(e) => setNewProjectRepo(e.target.value)}
+                    placeholder="저장소 경로 (org/repo)"
+                    className="h-8 text-xs"
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="h-7 text-xs bg-[#50fa7b] text-[#282a36] hover:bg-[#50fa7b]/80"
+                    disabled={!newProjectName || !newProjectRepo || createProject.isPending}
+                    onClick={handleCreateProject}
+                  >
+                    {createProject.isPending ? "생성 중..." : "프로젝트 생성"}
+                  </Button>
+                </div>
+              ) : (
+                <Select value={projectId} onValueChange={(v) => setProjectId(v ?? "")}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="프로젝트 선택" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(projects ?? []).map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-3">
@@ -265,15 +317,6 @@ export function NewHuntingDialog() {
                   </SelectContent>
                 </Select>
               </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label>커밋 SHA (선택)</Label>
-              <Input
-                value={commitSha}
-                onChange={(e) => setCommitSha(e.target.value)}
-                placeholder="HEAD"
-              />
             </div>
 
             {huntingType === "target_discovery" ? (
