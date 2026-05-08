@@ -12,6 +12,12 @@ import {
 } from "@/components/ui/table";
 import { useSessions } from "@/lib/hooks/use-sessions";
 
+const TYPE_LABEL: Record<string, string> = {
+  static_analysis: "정적 분석",
+  target_discovery: "타겟 디스커버리",
+  zero_day_hunting: "제로데이 헌팅",
+};
+
 const STATE_LABEL: Record<string, string> = {
   queued: "대기",
   preparing: "준비중",
@@ -44,6 +50,7 @@ export function SessionHistory({ projectId }: Props) {
       <TableHeader>
         <TableRow>
           <TableHead>커밋</TableHead>
+          <TableHead>유형</TableHead>
           <TableHead>상태</TableHead>
           <TableHead>모델</TableHead>
           <TableHead>토큰</TableHead>
@@ -61,6 +68,9 @@ export function SessionHistory({ projectId }: Props) {
               >
                 {s.commit_sha.slice(0, 8)}
               </Link>
+            </TableCell>
+            <TableCell className="text-xs">
+              {TYPE_LABEL[s.session_type] ?? s.session_type}
             </TableCell>
             <TableCell>
               <Badge
