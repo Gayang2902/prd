@@ -14,6 +14,12 @@ import {
 import { PriorityBadge } from "@/components/status-badge";
 import { useQueue } from "@/lib/hooks/use-queue";
 
+const TYPE_LABEL: Record<string, string> = {
+  static_analysis: "정적 분석",
+  target_discovery: "타겟 디스커버리",
+  zero_day_hunting: "제로데이 헌팅",
+};
+
 const STATE_LABEL: Record<
   string,
   {
@@ -95,6 +101,7 @@ export default function QueuePage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>세션</TableHead>
+                  <TableHead>유형</TableHead>
                   <TableHead>상태</TableHead>
                   <TableHead>우선순위</TableHead>
                   <TableHead>모델</TableHead>
@@ -117,6 +124,9 @@ export default function QueuePage() {
                         >
                           {s.id.slice(0, 8)}
                         </Link>
+                      </TableCell>
+                      <TableCell className="text-xs">
+                        {TYPE_LABEL[s.session_type] ?? s.session_type}
                       </TableCell>
                       <TableCell>
                         <Badge variant={stateConfig.variant}>
