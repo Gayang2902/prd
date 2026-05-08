@@ -962,3 +962,95 @@ def test_create_user_success() -> None:
     assert resp.status_code == 201
 
     _cleanup()
+
+
+# ── Hunting ──
+
+
+def _hunting_payload(**overrides):
+    return {
+        "project_id": str(overrides.get("project_id", uuid.uuid4())),
+        "preset_id": str(overrides.get("preset_id", uuid.uuid4())),
+        "agent_id": str(overrides.get("agent_id", uuid.uuid4())),
+        "config": overrides.get("config", {"skill": "opentarget"}),
+    }
+
+
+def test_update_phase() -> None:
+    from app.api.v1.hunting import _get_repo
+
+    session = _mock_session(
+        session_type=SessionType.TARGET_DISCOVERY,
+        current_phase="filtering",
+        phase_data={"config": {}, "phases": {"gathering": {"status": "done"}}},
+    )
+    mock_repo = AsyncMock()
+    mock_repo.update_phase_data.return_value = session
+    app.dependency_overrides[_get_repo] = lambda: mock_repo
+    mock_db, _ = _setup_overrides()
+    mock_db.commit = AsyncMock()
+
+    client = TestClient(app, raise_server_exceptions=False)
+    resp = client.patch(
+        f"/api/v1/hunting/sessions/{session.id}/phase",
+        json={"phase": "filtering", "status": "running"},
+    )
+    assert resp.status_code == 200
+    assert resp.json()["current_phase"] == "filtering"
+    _cleanup()
+
+
+def test_update_phase_not_found() -> None:
+    from app.api.v1.hunting import _get_repo
+
+    mock_repo = AsyncMock()
+    mock_repo.update_phase_data.return_value = None
+    app.dependency_overrides[_get_repo] = lambda: mock_repo
+    mock_db, _ = _setup_overrides()
+    mock_db.commit = AsyncMock()
+
+    client = TestClient(app, raise_server_exceptions=False)
+    resp = client.patch(
+        f"/api/v1/hunting/sessions/{uuid.uuid4()}/phase",
+        json={"phase": "fuzzing", "status": "running"},
+    )
+    assert resp.status_code == 404
+    _cleanup()
+
+
+def test_list_target_candidates() -> None:
+    from app.api.v1.hunting import _get_finding_repo
+
+    findings = [
+        _mock_finding(
+            category="target_candidate",
+            title="vuln-lib",
+            extras={"crackability_score": 8.5},
+        ),
+        _mock_finding(
+            category="target_candidate",
+            title="safe-lib",
+            extras={"crackability_score": 3.0},
+        ),
+    ]
+    mock_repo = AsyncMock()
+    mock_repo.list_by_session.return_value = findings
+    app.dependency_overrides[_get_finding_repo] = lambda: mock_repo
+    _setup_overrides()
+
+    client = TestClient(app, raise_server_exceptions=False)
+    resp = client.get(f"/api/v1/hunting/sessions/{uuid.uuid4()}/targets")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert len(data) == 2
+    assert data[0]["title"] == "vuln-lib"
+    _cleanup()
+
+
+def test_list_agents() -> None:
+    _setup_overrides()
+    client = TestClient(app, raise_server_exceptions=False)
+    resp = client.get("/api/v1/agents")
+    assert resp.status_code == 200
+    assert isinstance(resp.json(), dict)
+    _cleanup()
