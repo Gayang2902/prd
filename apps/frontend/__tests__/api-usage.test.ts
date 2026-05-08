@@ -94,7 +94,7 @@ describe("regression API", () => {
 
 describe("agents API", () => {
   it("fetchAgents", async () => {
-    const agents = { mock: { name: "mock", version: "1.0" } };
+    const agents = [{ id: "uuid-1", name: "mock", version: "1.0", description: "" }];
     mockApiFetch.mockResolvedValue(agents);
     const result = await fetchAgents();
     expect(mockApiFetch).toHaveBeenCalledWith("/agents");

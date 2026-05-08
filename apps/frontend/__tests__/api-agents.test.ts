@@ -14,17 +14,15 @@ beforeEach(() => {
 });
 
 describe("agents API", () => {
-  it("fetchAgents returns agent registry", async () => {
-    const agents = {
-      hunting: {
+  it("fetchAgents returns agent list", async () => {
+    const agents = [
+      {
+        id: "00000000-0000-0000-0000-000000000011",
         name: "hunting-agent",
-        version: "0.1.0",
-        supported_languages: ["python"],
-        max_input_size_bytes: 500000,
-        cost_profile: { input_per_1k: 0.003 },
+        version: "1.0.0",
         description: "Hunting agent",
       },
-    };
+    ];
     mockApiFetch.mockResolvedValue(agents);
     const result = await fetchAgents();
     expect(mockApiFetch).toHaveBeenCalledWith("/agents");

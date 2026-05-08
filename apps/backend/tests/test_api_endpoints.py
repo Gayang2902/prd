@@ -1048,9 +1048,22 @@ def test_list_target_candidates() -> None:
 
 
 def test_list_agents() -> None:
-    _setup_overrides()
+    mock_db, _ = _setup_overrides()
+    mock_agent = MagicMock()
+    mock_agent.id = uuid.UUID("00000000-0000-0000-0000-000000000010")
+    mock_agent.name = "securescope-default"
+    mock_agent.version = "0.1.0"
+    mock_agent.metadata_ = {"description": "기본 에이전트"}
+    result = MagicMock()
+    result.scalars.return_value.all.return_value = [mock_agent]
+    mock_db.execute = AsyncMock(return_value=result)
+
     client = TestClient(app, raise_server_exceptions=False)
     resp = client.get("/api/v1/agents")
     assert resp.status_code == 200
-    assert isinstance(resp.json(), dict)
+    data = resp.json()
+    assert isinstance(data, list)
+    assert len(data) == 1
+    assert data[0]["name"] == "securescope-default"
+    assert data[0]["id"] == "00000000-0000-0000-0000-000000000010"
     _cleanup()

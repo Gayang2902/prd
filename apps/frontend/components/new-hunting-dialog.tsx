@@ -81,7 +81,7 @@ export function NewHuntingDialog() {
   const { data: agents } = useAgents();
   const { data: presets } = usePresets();
 
-  const agentEntries = agents ? Object.entries(agents) : [];
+  const agentList = agents ?? [];
   const isPending = createTarget.isPending || createZeroDay.isPending;
 
   const reset = () => {
@@ -115,7 +115,7 @@ export function NewHuntingDialog() {
     const payload = {
       project_id: projectId,
       preset_id: presetId || "00000000-0000-0000-0000-000000000001",
-      agent_id: agentId || "00000000-0000-0000-0000-000000000010",
+      agent_id: agentId || "00000000-0000-0000-0000-000000000011",
       commit_sha: commitSha || null,
       config,
     };
@@ -232,13 +232,15 @@ export function NewHuntingDialog() {
                     <SelectValue placeholder="에이전트 선택" />
                   </SelectTrigger>
                   <SelectContent>
-                    {agentEntries.map(([name, _info]) => (
-                      <SelectItem key={name} value={name}>
-                        {name}
+                    {agentList.map((a) => (
+                      <SelectItem key={a.id} value={a.id}>
+                        {a.name}
                       </SelectItem>
                     ))}
-                    {agentEntries.length === 0 && (
-                      <SelectItem value="hunting">hunting-agent</SelectItem>
+                    {agentList.length === 0 && (
+                      <SelectItem value="00000000-0000-0000-0000-000000000011">
+                        hunting-agent
+                      </SelectItem>
                     )}
                   </SelectContent>
                 </Select>

@@ -39,7 +39,7 @@ export function NewSessionDialog({ projectId }: Props) {
   const { data: agents } = useAgents();
   const { data: presets } = usePresets();
 
-  const agentEntries = agents ? Object.entries(agents) : [];
+  const agentList = agents ?? [];
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -48,7 +48,7 @@ export function NewSessionDialog({ projectId }: Props) {
       commit_sha: commitSha || null,
       diff_base_sha: diffBaseSha || null,
       preset_id: presetId || "00000000-0000-0000-0000-000000000001",
-      agent_id: agentId || "00000000-0000-0000-0000-000000000001",
+      agent_id: agentId || "00000000-0000-0000-0000-000000000010",
     });
     setOpen(false);
     setBranch("");
@@ -73,13 +73,15 @@ export function NewSessionDialog({ projectId }: Props) {
                 <SelectValue placeholder="에이전트 선택" />
               </SelectTrigger>
               <SelectContent>
-                {agentEntries.map(([name, info]) => (
-                  <SelectItem key={name} value={name}>
-                    {name} — {info.description.slice(0, 50)}
+                {agentList.map((a) => (
+                  <SelectItem key={a.id} value={a.id}>
+                    {a.name} — {a.description.slice(0, 50)}
                   </SelectItem>
                 ))}
-                {agentEntries.length === 0 && (
-                  <SelectItem value="mock">mock (기본)</SelectItem>
+                {agentList.length === 0 && (
+                  <SelectItem value="00000000-0000-0000-0000-000000000010">
+                    securescope-default (기본)
+                  </SelectItem>
                 )}
               </SelectContent>
             </Select>

@@ -1,22 +1,23 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.services.agent_registry import get_registry
+from app.core.database import get_session
+from app.models.agent import Agent
 
 router = APIRouter(tags=["agents"])
 
 
 @router.get("/agents")
-async def list_agents() -> dict:
-    registry = get_registry()
-    result = {}
-    for name, cls in registry.items():
-        meta = cls.describe()
-        result[name] = {
-            "name": meta.name,
-            "version": meta.version,
-            "supported_languages": meta.supported_languages,
-            "max_input_size_bytes": meta.max_input_size_bytes,
-            "cost_profile": meta.cost_profile,
-            "description": meta.description,
+async def list_agents(db: AsyncSession = Depends(get_session)) -> list[dict]:
+    result = await db.execute(select(Agent))
+    agents = result.scalars().all()
+    return [
+        {
+            "id": str(a.id),
+            "name": a.name,
+            "version": a.version,
+            "description": (a.metadata_ or {}).get("description", ""),
         }
-    return result
+        for a in agents
+    ]

@@ -19,6 +19,7 @@ ADMIN_ID = uuid.UUID("00000000-0000-0000-0000-000000000001")
 LEAD_ID = uuid.UUID("00000000-0000-0000-0000-000000000002")
 REVIEWER_ID = uuid.UUID("00000000-0000-0000-0000-000000000003")
 AGENT_ID = uuid.UUID("00000000-0000-0000-0000-000000000010")
+HUNTING_AGENT_ID = uuid.UUID("00000000-0000-0000-0000-000000000011")
 
 
 async def seed() -> None:
@@ -46,7 +47,14 @@ async def seed() -> None:
             version="0.1.0",
             metadata_={"description": "기본 정적 분석 에이전트"},
         )
+        hunting_agent = Agent(
+            id=HUNTING_AGENT_ID,
+            name="hunting-agent",
+            version="1.0.0",
+            metadata_={"description": "Anthropic API 직접 호출 — opentarget/openresearch 스킬 기반 헌팅"},
+        )
         session.add(agent)
+        session.add(hunting_agent)
 
         for bp in BUILTIN_PRESETS:
             preset = Preset(agent_id=AGENT_ID, **bp)
@@ -60,7 +68,7 @@ async def seed() -> None:
         session.add(project)
 
         await session.commit()
-        print(f"Seeded: 3 users, 1 agent, {len(BUILTIN_PRESETS)} presets, 1 project")
+        print(f"Seeded: 3 users, 2 agents, {len(BUILTIN_PRESETS)} presets, 1 project")
         print(f"Admin user ID: {ADMIN_ID}")
         print(f"Use header: X-User-Id: {ADMIN_ID}")
 

@@ -1,14 +1,12 @@
 import { apiFetch } from "./client";
 
 export interface AgentInfo {
+  id: string;
   name: string;
   version: string;
-  supported_languages: string[];
-  max_input_size_bytes: number;
-  cost_profile: Record<string, number>;
   description: string;
 }
 
-export function fetchAgents(): Promise<Record<string, AgentInfo>> {
-  return apiFetch<Record<string, AgentInfo>>("/agents");
+export function fetchAgents(): Promise<AgentInfo[]> {
+  return apiFetch<AgentInfo[]>("/agents");
 }
