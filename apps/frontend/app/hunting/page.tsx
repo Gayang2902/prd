@@ -24,7 +24,6 @@ import { PhasePipeline } from "@/components/phase-pipeline";
 import { useHuntingSessions } from "@/lib/hooks/use-hunting";
 import { useProjects } from "@/lib/hooks/use-projects";
 import { SESSION_TYPE_LABEL, getPhaseConfig } from "@/lib/constants";
-import type { Session } from "@/lib/api/sessions";
 
 const STATE_VARIANT: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
   queued: "secondary",

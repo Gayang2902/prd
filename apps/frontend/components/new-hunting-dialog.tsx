@@ -232,7 +232,7 @@ export function NewHuntingDialog() {
                     <SelectValue placeholder="에이전트 선택" />
                   </SelectTrigger>
                   <SelectContent>
-                    {agentEntries.map(([name, info]) => (
+                    {agentEntries.map(([name, _info]) => (
                       <SelectItem key={name} value={name}>
                         {name}
                       </SelectItem>
