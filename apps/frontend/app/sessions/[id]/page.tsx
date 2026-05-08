@@ -4,11 +4,41 @@ import Link from "next/link";
 import { use } from "react";
 import { useSession } from "@/lib/hooks/use-sessions";
 import { getLogsUrl } from "@/lib/api/sessions";
+import type { Session } from "@/lib/api/sessions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LogStream } from "@/components/log-stream";
+import { PhasePipeline } from "@/components/phase-pipeline";
 import { StatCard } from "@/components/stat-card";
+
+const TYPE_LABEL: Record<string, string> = {
+  static_analysis: "정적 분석",
+  target_discovery: "타겟 디스커버리",
+  zero_day_hunting: "제로데이 헌팅",
+};
+
+const TARGET_PHASES = ["gathering", "filtering", "scoring", "shortlisting", "complete"];
+const TARGET_LABELS: Record<string, string> = {
+  gathering: "수집", filtering: "필터링", scoring: "스코어링", shortlisting: "숏리스트", complete: "완료",
+};
+
+const HUNTING_PHASES = ["setup", "fuzzing", "triage", "code_reading", "bypass", "cross_verify", "complete"];
+const HUNTING_LABELS: Record<string, string> = {
+  setup: "셋업", fuzzing: "퍼징", triage: "트리아지", code_reading: "코드 리딩",
+  bypass: "우회", cross_verify: "교차 검증", complete: "완료",
+};
+
+function getPhaseConfig(session: Session) {
+  if (session.session_type === "target_discovery") {
+    return { order: TARGET_PHASES, labels: TARGET_LABELS };
+  }
+  return { order: HUNTING_PHASES, labels: HUNTING_LABELS };
+}
+
+function isHuntingSession(session: Session) {
+  return session.session_type === "target_discovery" || session.session_type === "zero_day_hunting";
+}
 
 export default function SessionDetailPage({
   params,
@@ -35,14 +65,26 @@ export default function SessionDetailPage({
   return (
     <div className="mx-auto max-w-5xl p-6 space-y-6">
       <div className="space-y-1">
-        <Link
-          href={`/projects/${session.project_id}`}
-          className="text-sm text-muted-foreground hover:underline"
-        >
-          &larr; 프로젝트로 돌아가기
-        </Link>
+        <div className="flex items-center gap-3 text-sm text-muted-foreground">
+          <Link
+            href={`/projects/${session.project_id}`}
+            className="hover:underline"
+          >
+            &larr; 프로젝트
+          </Link>
+          {isHuntingSession(session) && (
+            <>
+              <span>/</span>
+              <Link href="/hunting" className="hover:underline">
+                헌팅
+              </Link>
+            </>
+          )}
+        </div>
         <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold">분석 회차</h1>
+          <h1 className="text-2xl font-bold">
+            {isHuntingSession(session) ? TYPE_LABEL[session.session_type] : "분석 회차"}
+          </h1>
           <Badge
             variant={
               session.state === "completed"
@@ -70,6 +112,27 @@ export default function SessionDetailPage({
         <StatCard title="토큰" value={session.token_usage.toLocaleString()} />
         <StatCard title="비용" value={`$${session.cost}`} />
       </div>
+
+      {isHuntingSession(session) && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              페이즈 진행
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <PhasePipeline
+              phases={
+                (session.phase_data as Record<string, unknown>)?.phases as
+                  Record<string, { status: "pending" | "running" | "done" | "failed" }> ?? {}
+              }
+              currentPhase={session.current_phase}
+              phaseOrder={getPhaseConfig(session).order}
+              labels={getPhaseConfig(session).labels}
+            />
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>

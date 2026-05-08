@@ -68,7 +68,7 @@ export default function Home() {
         </Card>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Link href="/projects" className="block">
           <Card className="h-full hover:bg-muted/50 transition-colors">
             <CardHeader>
@@ -77,6 +77,18 @@ export default function Home() {
             <CardContent>
               <p className="text-xs text-muted-foreground">
                 프로젝트 목록 조회 및 분석 실행
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href="/hunting" className="block">
+          <Card className="h-full hover:bg-muted/50 transition-colors">
+            <CardHeader>
+              <CardTitle className="text-sm">헌팅</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-xs text-muted-foreground">
+                타겟 디스커버리 & 제로데이 헌팅
               </p>
             </CardContent>
           </Card>
