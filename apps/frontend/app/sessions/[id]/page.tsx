@@ -3,11 +3,21 @@
 import Link from "next/link";
 import { use } from "react";
 import { useSession } from "@/lib/hooks/use-sessions";
+import { useFindings } from "@/lib/hooks/use-findings";
+import { useTargetCandidates } from "@/lib/hooks/use-hunting";
 import { getLogsUrl } from "@/lib/api/sessions";
 import type { Session } from "@/lib/api/sessions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { LogStream } from "@/components/log-stream";
 import { PhasePipeline } from "@/components/phase-pipeline";
 import { StatCard } from "@/components/stat-card";
@@ -38,6 +48,102 @@ function getPhaseConfig(session: Session) {
 
 function isHuntingSession(session: Session) {
   return session.session_type === "target_discovery" || session.session_type === "zero_day_hunting";
+}
+
+const SEVERITY_COLOR: Record<string, string> = {
+  critical: "text-[#ff5555]",
+  high: "text-[#ffb86c]",
+  medium: "text-[#f1fa8c]",
+  low: "text-[#8be9fd]",
+  info: "text-[#6272a4]",
+};
+
+function TargetResults({ sessionId }: { sessionId: string }) {
+  const { data: targets } = useTargetCandidates(sessionId);
+  if (!targets?.length) return null;
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-sm font-medium text-muted-foreground">
+          타겟 후보 ({targets.length}건)
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>타겟</TableHead>
+              <TableHead>카테고리</TableHead>
+              <TableHead>심각도</TableHead>
+              <TableHead>설명</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {targets.map((t) => (
+              <TableRow key={t.id}>
+                <TableCell className="font-mono text-xs">{t.title}</TableCell>
+                <TableCell>
+                  <Badge variant="outline">{t.category}</Badge>
+                </TableCell>
+                <TableCell>
+                  <span className={SEVERITY_COLOR[t.severity] ?? ""}>
+                    {t.severity}
+                  </span>
+                </TableCell>
+                <TableCell className="text-xs max-w-xs truncate">
+                  {t.description}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
+  );
+}
+
+function ZeroDayResults({ sessionId }: { sessionId: string }) {
+  const { data: findings } = useFindings(sessionId);
+  if (!findings?.length) return null;
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-sm font-medium text-muted-foreground">
+          발견된 취약점 ({findings.length}건)
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>제목</TableHead>
+              <TableHead>파일</TableHead>
+              <TableHead>심각도</TableHead>
+              <TableHead>카테고리</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {findings.map((f) => (
+              <TableRow key={f.id}>
+                <TableCell className="text-xs font-medium">{f.title}</TableCell>
+                <TableCell className="font-mono text-xs">
+                  {f.file_path}:{f.line_start}
+                </TableCell>
+                <TableCell>
+                  <span className={SEVERITY_COLOR[f.severity] ?? ""}>
+                    {f.severity}
+                  </span>
+                </TableCell>
+                <TableCell>
+                  <Badge variant="outline">{f.category}</Badge>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
+  );
 }
 
 export default function SessionDetailPage({
@@ -177,6 +283,13 @@ export default function SessionDetailPage({
           </div>
         </CardContent>
       </Card>
+
+      {session.session_type === "target_discovery" && (
+        <TargetResults sessionId={id} />
+      )}
+      {session.session_type === "zero_day_hunting" && (
+        <ZeroDayResults sessionId={id} />
+      )}
 
       <LogStream url={logsUrl} />
     </div>
