@@ -8,11 +8,11 @@ import { useUpdateFindingStatus } from "@/lib/hooks/use-findings";
 import { cn } from "@/lib/utils";
 
 const SEVERITY_COLORS: Record<string, string> = {
-  critical: "bg-red-600 text-white",
-  high: "bg-orange-500 text-white",
-  medium: "bg-yellow-500 text-black",
-  low: "bg-blue-500 text-white",
-  info: "bg-gray-400 text-white",
+  critical: "bg-[#ff5555] text-[#282a36]",
+  high: "bg-[#ffb86c] text-[#282a36]",
+  medium: "bg-[#f1fa8c] text-[#282a36]",
+  low: "bg-[#8be9fd] text-[#282a36]",
+  info: "bg-[#6272a4] text-[#f8f8f2]",
 };
 
 interface Props {
