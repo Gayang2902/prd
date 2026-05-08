@@ -976,6 +976,95 @@ def _hunting_payload(**overrides):
     }
 
 
+def test_create_target_discovery() -> None:
+    from unittest.mock import patch
+
+    from app.api.v1.hunting import _get_repo
+
+    mock_repo = AsyncMock()
+    mock_repo.create.return_value = _mock_session(session_type=SessionType.TARGET_DISCOVERY)
+    app.dependency_overrides[_get_repo] = lambda: mock_repo
+    mock_db, _ = _setup_overrides()
+    mock_db.commit = AsyncMock()
+
+    fake_meta = MagicMock()
+    fake_meta.name = "hunting-agent"
+    fake_meta.version = "1.0.0"
+    fake_agent = MagicMock()
+    fake_agent.describe.return_value = fake_meta
+
+    mock_temporal = AsyncMock()
+    mock_temporal.start_workflow = AsyncMock()
+
+    with patch("app.api.v1.hunting.get_registry", return_value={"hunting": fake_agent}), \
+         patch("app.api.v1.hunting.get_temporal_client", return_value=mock_temporal):
+        client = TestClient(app, raise_server_exceptions=False)
+        resp = client.post(
+            "/api/v1/hunting/target-discovery",
+            json=_hunting_payload(),
+        )
+        assert resp.status_code == 202
+        assert resp.json()["session_type"] == "target_discovery"
+        mock_temporal.start_workflow.assert_awaited_once()
+
+    _cleanup()
+
+
+def test_create_zero_day_hunt() -> None:
+    from unittest.mock import patch
+
+    from app.api.v1.hunting import _get_repo
+
+    mock_repo = AsyncMock()
+    mock_repo.create.return_value = _mock_session(session_type=SessionType.ZERO_DAY_HUNTING)
+    app.dependency_overrides[_get_repo] = lambda: mock_repo
+    mock_db, _ = _setup_overrides()
+    mock_db.commit = AsyncMock()
+
+    fake_meta = MagicMock()
+    fake_meta.name = "hunting-agent"
+    fake_meta.version = "1.0.0"
+    fake_agent = MagicMock()
+    fake_agent.describe.return_value = fake_meta
+
+    mock_temporal = AsyncMock()
+    mock_temporal.start_workflow = AsyncMock()
+
+    with patch("app.api.v1.hunting.get_registry", return_value={"hunting": fake_agent}), \
+         patch("app.api.v1.hunting.get_temporal_client", return_value=mock_temporal):
+        client = TestClient(app, raise_server_exceptions=False)
+        resp = client.post(
+            "/api/v1/hunting/zero-day",
+            json=_hunting_payload(),
+        )
+        assert resp.status_code == 202
+        assert resp.json()["session_type"] == "zero_day_hunting"
+
+    _cleanup()
+
+
+def test_create_hunting_no_agents() -> None:
+    from unittest.mock import patch
+
+    from app.api.v1.hunting import _get_repo
+
+    mock_repo = AsyncMock()
+    app.dependency_overrides[_get_repo] = lambda: mock_repo
+    _setup_overrides()
+
+    with patch("app.api.v1.hunting.get_registry", return_value={}):
+        client = TestClient(app, raise_server_exceptions=False)
+        resp = client.post(
+            "/api/v1/hunting/target-discovery",
+            json=_hunting_payload(),
+        )
+        assert resp.status_code == 400
+        body = resp.json()
+        assert "No agents" in body.get("detail", body.get("title", ""))
+
+    _cleanup()
+
+
 def test_update_phase() -> None:
     from app.api.v1.hunting import _get_repo
 
