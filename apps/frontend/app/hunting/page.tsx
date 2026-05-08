@@ -1,8 +1,16 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -77,8 +85,9 @@ function getPhaseConfig(session: Session) {
 
 export default function HuntingPage() {
   const { data: projects } = useProjects();
-  const firstProjectId = projects?.[0]?.id ?? "";
-  const { data: sessions, isLoading } = useHuntingSessions(firstProjectId);
+  const [selectedProjectId, setSelectedProjectId] = useState("");
+  const projectId = selectedProjectId || projects?.[0]?.id || "";
+  const { data: sessions, isLoading } = useHuntingSessions(projectId);
 
   const active = sessions?.filter(
     (s) => !["completed", "failed", "canceled"].includes(s.state),
@@ -96,7 +105,21 @@ export default function HuntingPage() {
             타겟 디스커버리 & 제로데이 헌팅 세션 관리
           </p>
         </div>
-        <NewHuntingDialog />
+        <div className="flex items-center gap-3">
+          <Select value={projectId} onValueChange={(v) => setSelectedProjectId(v ?? "")}>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="프로젝트 선택" />
+            </SelectTrigger>
+            <SelectContent>
+              {(projects ?? []).map((p) => (
+                <SelectItem key={p.id} value={p.id}>
+                  {p.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <NewHuntingDialog />
+        </div>
       </div>
 
       <div className="grid grid-cols-3 gap-4">
