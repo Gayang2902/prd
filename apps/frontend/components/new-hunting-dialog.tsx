@@ -238,7 +238,7 @@ export function NewHuntingDialog() {
                       </SelectItem>
                     ))}
                     {agentEntries.length === 0 && (
-                      <SelectItem value="mock">기본 에이전트</SelectItem>
+                      <SelectItem value="hunting">hunting-agent</SelectItem>
                     )}
                   </SelectContent>
                 </Select>
