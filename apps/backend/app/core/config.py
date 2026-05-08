@@ -11,7 +11,7 @@ class Settings(BaseSettings):
     redis_url: str = "redis://localhost:16379/0"
     temporal_host: str = "localhost:7233"
 
-    cors_origins: list[str] = ["http://localhost:3000", "http://localhost:3001"]
+    cors_origins: list[str] = ["http://localhost:3000", "http://localhost:3001", "http://localhost:13000"]
 
     finding_mcp_cmd: str = "finding-mcp"
     claude_cmd: str = "claude"
