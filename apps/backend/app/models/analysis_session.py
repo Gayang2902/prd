@@ -51,7 +51,7 @@ class AnalysisSession(Base):
     preset_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("presets.id"))
     model_version: Mapped[str] = mapped_column(String(100))
     container_image_sha: Mapped[str | None] = mapped_column(String(100), default=None)
-    session_type: Mapped[SessionType] = mapped_column(default=SessionType.STATIC_ANALYSIS)
+    session_type: Mapped[SessionType] = mapped_column(String(30), default=SessionType.STATIC_ANALYSIS)
     state: Mapped[SessionState] = mapped_column(default=SessionState.QUEUED)
     priority: Mapped[SessionPriority] = mapped_column(default=SessionPriority.NORMAL)
     current_phase: Mapped[str | None] = mapped_column(String(50), default=None)
