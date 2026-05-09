@@ -8,28 +8,25 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from app.workflows.hunting_activities import (
-    CLAUDE_CODE_AGENT_ID,
     PHASE_PROMPTS,
     SKILL_BY_TYPE,
     _fingerprint,
-    _run_via_claude_code,
     run_hunting_phase,
     save_hunting_findings,
 )
 
 
-# ── run_hunting_phase ──
+# ── run_hunting_phase (Claude Code CLI) ──
 
 
 @pytest.mark.asyncio
 async def test_run_hunting_phase_success():
-    mock_response = MagicMock()
-    mock_response.content = [MagicMock(text='{"phase": "gathering", "status": "done", "results": []}')]
+    output = json.dumps({"result": '{"phase": "gathering", "status": "done", "results": []}'})
+    mock_proc = AsyncMock()
+    mock_proc.communicate = AsyncMock(return_value=(output.encode(), b""))
+    mock_proc.returncode = 0
 
-    mock_client = AsyncMock()
-    mock_client.messages.create = AsyncMock(return_value=mock_response)
-
-    with patch("app.workflows.hunting_activities.AsyncAnthropic", return_value=mock_client), \
+    with patch("app.workflows.hunting_activities.asyncio.create_subprocess_exec", return_value=mock_proc), \
          patch("app.workflows.hunting_activities.SKILLS_DIR") as mock_dir:
         mock_skill_path = MagicMock()
         mock_skill_path.exists.return_value = True
@@ -45,11 +42,8 @@ async def test_run_hunting_phase_success():
 
 
 @pytest.mark.asyncio
-async def test_run_hunting_phase_api_error():
-    mock_client = AsyncMock()
-    mock_client.messages.create = AsyncMock(side_effect=RuntimeError("API down"))
-
-    with patch("app.workflows.hunting_activities.AsyncAnthropic", return_value=mock_client), \
+async def test_run_hunting_phase_cli_not_found():
+    with patch("app.workflows.hunting_activities.asyncio.create_subprocess_exec", side_effect=FileNotFoundError), \
          patch("app.workflows.hunting_activities.SKILLS_DIR") as mock_dir:
         mock_skill_path = MagicMock()
         mock_skill_path.exists.return_value = False
@@ -60,18 +54,36 @@ async def test_run_hunting_phase_api_error():
         )
 
     assert result["status"] == "failed"
-    assert "API down" in result["error"]
+    assert "not found" in result["error"]
+
+
+@pytest.mark.asyncio
+async def test_run_hunting_phase_nonzero_exit():
+    mock_proc = AsyncMock()
+    mock_proc.communicate = AsyncMock(return_value=(b"", b"auth error"))
+    mock_proc.returncode = 1
+
+    with patch("app.workflows.hunting_activities.asyncio.create_subprocess_exec", return_value=mock_proc), \
+         patch("app.workflows.hunting_activities.SKILLS_DIR") as mock_dir:
+        mock_skill_path = MagicMock()
+        mock_skill_path.exists.return_value = False
+        mock_dir.__truediv__ = MagicMock(return_value=MagicMock(__truediv__=MagicMock(return_value=mock_skill_path)))
+
+        result = await run_hunting_phase(
+            uuid.uuid4(), "target_discovery", "gathering", {}, "/tmp/work"
+        )
+
+    assert result["status"] == "failed"
+    assert "auth error" in result["error"]
 
 
 @pytest.mark.asyncio
 async def test_run_hunting_phase_invalid_json():
-    mock_response = MagicMock()
-    mock_response.content = [MagicMock(text="This is not valid JSON")]
+    mock_proc = AsyncMock()
+    mock_proc.communicate = AsyncMock(return_value=(b"not json at all", b""))
+    mock_proc.returncode = 0
 
-    mock_client = AsyncMock()
-    mock_client.messages.create = AsyncMock(return_value=mock_response)
-
-    with patch("app.workflows.hunting_activities.AsyncAnthropic", return_value=mock_client), \
+    with patch("app.workflows.hunting_activities.asyncio.create_subprocess_exec", return_value=mock_proc), \
          patch("app.workflows.hunting_activities.SKILLS_DIR") as mock_dir:
         mock_skill_path = MagicMock()
         mock_skill_path.exists.return_value = False
@@ -87,13 +99,12 @@ async def test_run_hunting_phase_invalid_json():
 
 @pytest.mark.asyncio
 async def test_run_hunting_phase_with_previous_results():
-    mock_response = MagicMock()
-    mock_response.content = [MagicMock(text='{"phase": "filtering", "status": "done", "results": []}')]
+    output = json.dumps({"result": '{"phase": "filtering", "status": "done", "results": []}'})
+    mock_proc = AsyncMock()
+    mock_proc.communicate = AsyncMock(return_value=(output.encode(), b""))
+    mock_proc.returncode = 0
 
-    mock_client = AsyncMock()
-    mock_client.messages.create = AsyncMock(return_value=mock_response)
-
-    with patch("app.workflows.hunting_activities.AsyncAnthropic", return_value=mock_client), \
+    with patch("app.workflows.hunting_activities.asyncio.create_subprocess_exec", return_value=mock_proc) as mock_exec, \
          patch("app.workflows.hunting_activities.SKILLS_DIR") as mock_dir:
         mock_skill_path = MagicMock()
         mock_skill_path.exists.return_value = False
@@ -108,9 +119,31 @@ async def test_run_hunting_phase_with_previous_results():
         )
 
     assert result["phase"] == "filtering"
-    call_args = mock_client.messages.create.call_args
-    user_msg = call_args.kwargs["messages"][0]["content"]
-    assert "previous_results" in user_msg
+    prompt_arg = mock_exec.call_args[0][2]
+    assert "이전 페이즈 결과" in prompt_arg
+
+
+@pytest.mark.asyncio
+async def test_run_hunting_phase_includes_skill():
+    output = json.dumps({"result": '{"phase": "gathering", "status": "done", "results": []}'})
+    mock_proc = AsyncMock()
+    mock_proc.communicate = AsyncMock(return_value=(output.encode(), b""))
+    mock_proc.returncode = 0
+
+    with patch("app.workflows.hunting_activities.asyncio.create_subprocess_exec", return_value=mock_proc) as mock_exec, \
+         patch("app.workflows.hunting_activities.SKILLS_DIR") as mock_dir:
+        mock_skill_path = MagicMock()
+        mock_skill_path.exists.return_value = True
+        mock_skill_path.read_text.return_value = "# Target Discovery Skill"
+        mock_dir.__truediv__ = MagicMock(return_value=MagicMock(__truediv__=MagicMock(return_value=mock_skill_path)))
+
+        await run_hunting_phase(
+            uuid.uuid4(), "target_discovery", "gathering", {}, "/tmp/work"
+        )
+
+    prompt_arg = mock_exec.call_args[0][2]
+    assert "<skill>" in prompt_arg
+    assert "Target Discovery Skill" in prompt_arg
 
 
 # ── save_hunting_findings ──
@@ -256,121 +289,3 @@ def test_phase_prompts_coverage():
 def test_skill_mapping():
     assert SKILL_BY_TYPE["target_discovery"] == "opentarget"
     assert SKILL_BY_TYPE["zero_day_hunting"] == "openresearch"
-
-
-# ── agent routing ──
-
-
-@pytest.mark.asyncio
-async def test_run_hunting_phase_routes_to_api_by_default():
-    mock_response = MagicMock()
-    mock_response.content = [MagicMock(text='{"phase": "gathering", "status": "done"}')]
-    mock_client = AsyncMock()
-    mock_client.messages.create = AsyncMock(return_value=mock_response)
-
-    with patch("app.workflows.hunting_activities.AsyncAnthropic", return_value=mock_client), \
-         patch("app.workflows.hunting_activities.SKILLS_DIR") as mock_dir:
-        mock_skill_path = MagicMock()
-        mock_skill_path.exists.return_value = False
-        mock_dir.__truediv__ = MagicMock(return_value=MagicMock(__truediv__=MagicMock(return_value=mock_skill_path)))
-
-        result = await run_hunting_phase(
-            uuid.uuid4(), "target_discovery", "gathering", {}, "/tmp", None
-        )
-
-    assert result["status"] == "done"
-    mock_client.messages.create.assert_awaited_once()
-
-
-@pytest.mark.asyncio
-async def test_run_hunting_phase_routes_to_claude_code():
-    output = json.dumps({"result": '{"phase": "gathering", "status": "done", "results": []}'})
-    mock_proc = AsyncMock()
-    mock_proc.communicate = AsyncMock(return_value=(output.encode(), b""))
-    mock_proc.returncode = 0
-
-    with patch("app.workflows.hunting_activities.asyncio.create_subprocess_exec", return_value=mock_proc):
-        result = await run_hunting_phase(
-            uuid.uuid4(), "target_discovery", "gathering", {}, "/tmp", CLAUDE_CODE_AGENT_ID
-        )
-
-    assert result["status"] == "done"
-
-
-# ── _run_via_claude_code ──
-
-
-@pytest.mark.asyncio
-async def test_claude_code_success():
-    output = json.dumps({"result": '{"phase": "fuzzing", "status": "done", "results": [{"title": "crash"}]}'})
-    mock_proc = AsyncMock()
-    mock_proc.communicate = AsyncMock(return_value=(output.encode(), b""))
-    mock_proc.returncode = 0
-
-    with patch("app.workflows.hunting_activities.asyncio.create_subprocess_exec", return_value=mock_proc):
-        result = await _run_via_claude_code(
-            uuid.uuid4(), "zero_day_hunting", "fuzzing", {}, "/tmp"
-        )
-
-    assert result["status"] == "done"
-    assert len(result["results"]) == 1
-
-
-@pytest.mark.asyncio
-async def test_claude_code_not_found():
-    with patch("app.workflows.hunting_activities.asyncio.create_subprocess_exec", side_effect=FileNotFoundError):
-        result = await _run_via_claude_code(
-            uuid.uuid4(), "target_discovery", "gathering", {}, "/tmp"
-        )
-
-    assert result["status"] == "failed"
-    assert "not found" in result["error"]
-
-
-@pytest.mark.asyncio
-async def test_claude_code_nonzero_exit():
-    mock_proc = AsyncMock()
-    mock_proc.communicate = AsyncMock(return_value=(b"", b"auth error"))
-    mock_proc.returncode = 1
-
-    with patch("app.workflows.hunting_activities.asyncio.create_subprocess_exec", return_value=mock_proc):
-        result = await _run_via_claude_code(
-            uuid.uuid4(), "target_discovery", "gathering", {}, "/tmp"
-        )
-
-    assert result["status"] == "failed"
-    assert "auth error" in result["error"]
-
-
-@pytest.mark.asyncio
-async def test_claude_code_invalid_json_output():
-    mock_proc = AsyncMock()
-    mock_proc.communicate = AsyncMock(return_value=(b"not json at all", b""))
-    mock_proc.returncode = 0
-
-    with patch("app.workflows.hunting_activities.asyncio.create_subprocess_exec", return_value=mock_proc):
-        result = await _run_via_claude_code(
-            uuid.uuid4(), "target_discovery", "gathering", {}, "/tmp"
-        )
-
-    assert result["status"] == "done"
-    assert "raw" in result
-
-
-@pytest.mark.asyncio
-async def test_claude_code_with_previous_results():
-    output = json.dumps({"result": '{"phase": "filtering", "status": "done", "results": []}'})
-    mock_proc = AsyncMock()
-    mock_proc.communicate = AsyncMock(return_value=(output.encode(), b""))
-    mock_proc.returncode = 0
-
-    with patch("app.workflows.hunting_activities.asyncio.create_subprocess_exec", return_value=mock_proc) as mock_exec:
-        result = await _run_via_claude_code(
-            uuid.uuid4(), "target_discovery", "filtering",
-            {"previous_results": {"gathering": {"results": []}}},
-            "/tmp",
-        )
-
-    assert result["status"] == "done"
-    prompt_arg = mock_exec.call_args[0][2]
-    assert "이전 페이즈 결과" in prompt_arg

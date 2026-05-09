@@ -7,7 +7,6 @@ from pathlib import Path
 from uuid import UUID
 
 import structlog
-from anthropic import AsyncAnthropic
 from temporalio import activity
 
 from app.core.config import settings
@@ -15,10 +14,7 @@ from app.core.config import settings
 logger = structlog.get_logger()
 
 SKILLS_DIR = Path(os.environ.get("SKILLS_DIR", str(Path.home() / ".claude" / "skills")))
-MODEL = os.environ.get("HUNTING_MODEL", "claude-sonnet-4-20250514")
 CLAUDE_CMD = os.environ.get("CLAUDE_CMD", settings.claude_cmd)
-CLAUDE_CODE_AGENT_ID = "00000000-0000-0000-0000-000000000012"
-MAX_TOKENS = 16384
 
 SKILL_BY_TYPE: dict[str, str] = {
     "target_discovery": "opentarget",
@@ -58,18 +54,6 @@ async def run_hunting_phase(
     work_dir: str,
     agent_id: str | None = None,
 ) -> dict:
-    if agent_id == CLAUDE_CODE_AGENT_ID:
-        return await _run_via_claude_code(session_id, session_type, phase, config, work_dir)
-    return await _run_via_api(session_id, session_type, phase, config, work_dir)
-
-
-async def _run_via_api(
-    session_id: UUID,
-    session_type: str,
-    phase: str,
-    config: dict,
-    work_dir: str,
-) -> dict:
     skill_name = SKILL_BY_TYPE.get(session_type, "opentarget")
     skill_path = SKILLS_DIR / skill_name / "SKILL.md"
     skill_content = skill_path.read_text() if skill_path.exists() else ""
@@ -79,54 +63,14 @@ async def _run_via_api(
     previous = config.get("previous_results", {})
     prev_str = ""
     if previous:
-        prev_str = f"\n<previous_results>\n{json.dumps(previous, ensure_ascii=False, default=str)[:8000]}\n</previous_results>"
-
-    config_clean = {k: v for k, v in config.items() if k != "previous_results"}
-    config_str = json.dumps(config_clean, ensure_ascii=False) if config_clean else "{}"
-
-    system_prompt = f"너는 보안 연구원이다. 아래 스킬 지침을 정확히 따라 실행하라.\n\n{skill_content}"
-    user_prompt = f"<config>{config_str}</config>\n<phase>{phase}</phase>{prev_str}\n\n{phase_instruction}\n\n{OUTPUT_SCHEMA}"
-
-    activity.logger.info("Running hunting phase via API", extra={"phase": phase, "model": MODEL})
-
-    client = AsyncAnthropic()
-    try:
-        response = await client.messages.create(
-            model=MODEL,
-            max_tokens=MAX_TOKENS,
-            system=system_prompt,
-            messages=[{"role": "user", "content": user_prompt}],
-        )
-        text = response.content[0].text if response.content else ""
-    except Exception as e:
-        activity.logger.error("API call failed", extra={"phase": phase, "error": str(e)})
-        return {"phase": phase, "status": "failed", "error": str(e)[:2000]}
-
-    try:
-        result = json.loads(text)
-        return result
-    except json.JSONDecodeError:
-        return {"phase": phase, "status": "done", "raw": text[:10000]}
-
-
-async def _run_via_claude_code(
-    session_id: UUID,
-    session_type: str,
-    phase: str,
-    config: dict,
-    work_dir: str,
-) -> dict:
-    phase_instruction = PHASE_PROMPTS.get(session_type, {}).get(phase, f"Phase '{phase}' 실행.")
-
-    previous = config.get("previous_results", {})
-    prev_str = ""
-    if previous:
         prev_str = f"\n\n이전 페이즈 결과:\n{json.dumps(previous, ensure_ascii=False, default=str)[:8000]}"
 
     config_clean = {k: v for k, v in config.items() if k != "previous_results"}
 
-    prompt = (
-        f"보안 연구원으로서 {session_type} 분석의 '{phase}' 페이즈를 실행하라.\n\n"
+    prompt = f"보안 연구원으로서 {session_type} 분석의 '{phase}' 페이즈를 실행하라.\n\n"
+    if skill_content:
+        prompt += f"<skill>\n{skill_content}\n</skill>\n\n"
+    prompt += (
         f"{phase_instruction}\n\n"
         f"설정: {json.dumps(config_clean, ensure_ascii=False) if config_clean else '{}'}"
         f"{prev_str}\n\n"
@@ -136,7 +80,7 @@ async def _run_via_claude_code(
     cmd = [CLAUDE_CMD, "-p", prompt, "--output-format", "json", "--max-turns", "30"]
     cwd = work_dir if os.path.isdir(work_dir) else None
 
-    activity.logger.info("Running hunting phase via Claude Code CLI", extra={"phase": phase})
+    activity.logger.info("Running hunting phase", extra={"phase": phase})
 
     try:
         proc = await asyncio.create_subprocess_exec(
