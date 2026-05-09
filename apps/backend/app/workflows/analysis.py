@@ -38,7 +38,7 @@ class AnalysisWorkflow:
         try:
             await workflow.execute_activity(
                 record_session_state,
-                args=[ctx.session_id, SessionState.PREPARING],
+                args=[ctx.session_id, SessionState.PREPARING.value],
                 start_to_close_timeout=short,
             )
             env_handle = await workflow.execute_activity(
@@ -57,7 +57,7 @@ class AnalysisWorkflow:
 
             await workflow.execute_activity(
                 record_session_state,
-                args=[ctx.session_id, SessionState.RUNNING],
+                args=[ctx.session_id, SessionState.RUNNING.value],
                 start_to_close_timeout=short,
             )
             result = await workflow.execute_activity(
@@ -70,7 +70,7 @@ class AnalysisWorkflow:
 
             await workflow.execute_activity(
                 record_session_state,
-                args=[ctx.session_id, SessionState.POST_PROCESSING],
+                args=[ctx.session_id, SessionState.POST_PROCESSING.value],
                 start_to_close_timeout=short,
             )
             await workflow.execute_activity(
@@ -82,7 +82,7 @@ class AnalysisWorkflow:
 
             await workflow.execute_activity(
                 record_session_state,
-                args=[ctx.session_id, SessionState.COMPLETED],
+                args=[ctx.session_id, SessionState.COMPLETED.value],
                 start_to_close_timeout=short,
             )
             return str(ctx.session_id)
@@ -90,7 +90,7 @@ class AnalysisWorkflow:
         except asyncio.CancelledError:
             await workflow.execute_activity(
                 record_session_state,
-                args=[ctx.session_id, SessionState.CANCELED],
+                args=[ctx.session_id, SessionState.CANCELED.value],
                 start_to_close_timeout=short,
             )
             raise
@@ -98,7 +98,7 @@ class AnalysisWorkflow:
         except Exception:
             await workflow.execute_activity(
                 record_session_state,
-                args=[ctx.session_id, SessionState.FAILED],
+                args=[ctx.session_id, SessionState.FAILED.value],
                 start_to_close_timeout=short,
             )
             raise

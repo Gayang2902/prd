@@ -77,6 +77,27 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+  worker:
+    build:
+      context: .
+      dockerfile: apps/backend/Dockerfile
+    command: python worker.py
+    environment:
+      DATABASE_URL: postgresql+asyncpg://securescope:localdev@postgres:5432/securescope
+      REDIS_URL: redis://redis:6379/0
+      TEMPORAL_HOST: temporal:7233
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      SKILLS_DIR: /skills
+    volumes:
+      - ~/.claude/skills:/skills:ro
+      - claude-auth:/root/.claude
+    depends_on:
+      backend:
+        condition: service_healthy
+      temporal:
+        condition: service_healthy
+    restart: unless-stopped
+
   frontend:
     build:
       context: apps/frontend

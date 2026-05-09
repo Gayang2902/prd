@@ -237,21 +237,23 @@ async def cleanup_isolated_env(env: EnvHandle) -> None:
 
 
 @activity.defn(name="record_session_state")
-async def record_session_state(session_id: UUID, state: SessionState) -> None:
+async def record_session_state(session_id: UUID, state: str) -> None:
     from app.core.database import async_session_factory
     from app.services.repositories.session import SessionRepository
+
+    actual_state = SessionState(state) if isinstance(state, str) else state
 
     async with async_session_factory() as session:
         repo = SessionRepository(session)
         analysis = await repo.get(session_id)
         if analysis is None:
             raise RuntimeError(f"Session {session_id} not found")
-        await repo.transition(analysis, state)
+        await repo.transition(analysis, actual_state)
         await session.commit()
 
     await _ws_broadcast(session_id, {
         "type": "state_changed",
-        "state": state.value,
+        "state": actual_state.value,
     })
 
-    activity.logger.info("Session state updated", extra={"state": state.value})
+    activity.logger.info("Session state updated", extra={"state": actual_state.value})

@@ -134,6 +134,8 @@ class SessionRepository:
     async def transition(
         self, analysis: AnalysisSession, new_state: SessionState
     ) -> AnalysisSession:
+        if analysis.state == new_state:
+            return analysis
         allowed = VALID_TRANSITIONS.get(analysis.state, set())
         if new_state not in allowed:
             raise InvalidStateTransitionError(
