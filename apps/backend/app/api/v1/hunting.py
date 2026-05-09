@@ -111,9 +111,7 @@ async def create_target_discovery(
     repo: SessionRepository = Depends(_get_repo),
     db: AsyncSession = Depends(get_session),
 ) -> SessionRead:
-    return await _create_hunting_session(
-        payload, SessionType.TARGET_DISCOVERY, repo, db
-    )
+    return await _create_hunting_session(payload, SessionType.TARGET_DISCOVERY, repo, db)
 
 
 @router.post(
@@ -127,9 +125,7 @@ async def create_zero_day_hunt(
     repo: SessionRepository = Depends(_get_repo),
     db: AsyncSession = Depends(get_session),
 ) -> SessionRead:
-    return await _create_hunting_session(
-        payload, SessionType.ZERO_DAY_HUNTING, repo, db
-    )
+    return await _create_hunting_session(payload, SessionType.ZERO_DAY_HUNTING, repo, db)
 
 
 @router.patch(
@@ -143,9 +139,7 @@ async def update_phase(
     repo: SessionRepository = Depends(_get_repo),
     db: AsyncSession = Depends(get_session),
 ) -> SessionRead:
-    analysis = await repo.update_phase_data(
-        session_id, payload.phase, payload.status, payload.data
-    )
+    analysis = await repo.update_phase_data(session_id, payload.phase, payload.status, payload.data)
     if analysis is None:
         raise HTTPException(status_code=404, detail="Session not found")
     await db.commit()
@@ -160,9 +154,7 @@ async def list_target_candidates(
     session_id: uuid.UUID,
     repo: FindingRepository = Depends(_get_finding_repo),
 ) -> list[FindingRead]:
-    findings = await repo.list_by_session(
-        session_id, category="target_candidate"
-    )
+    findings = await repo.list_by_session(session_id, category="target_candidate")
     findings.sort(
         key=lambda f: (f.extras or {}).get("crackability_score", 0),
         reverse=True,

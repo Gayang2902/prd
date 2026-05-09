@@ -15,7 +15,6 @@ from app.workflows.hunting_activities import (
     save_hunting_findings,
 )
 
-
 # ── run_hunting_phase (Claude Code CLI) ──
 
 
@@ -26,12 +25,19 @@ async def test_run_hunting_phase_success():
     mock_proc.communicate = AsyncMock(return_value=(output.encode(), b""))
     mock_proc.returncode = 0
 
-    with patch("app.workflows.hunting_activities.asyncio.create_subprocess_exec", return_value=mock_proc), \
-         patch("app.workflows.hunting_activities.SKILLS_DIR") as mock_dir:
+    with (
+        patch(
+            "app.workflows.hunting_activities.asyncio.create_subprocess_exec",
+            return_value=mock_proc,
+        ),
+        patch("app.workflows.hunting_activities.SKILLS_DIR") as mock_dir,
+    ):
         mock_skill_path = MagicMock()
         mock_skill_path.exists.return_value = True
         mock_skill_path.read_text.return_value = "# Skill content"
-        mock_dir.__truediv__ = MagicMock(return_value=MagicMock(__truediv__=MagicMock(return_value=mock_skill_path)))
+        mock_dir.__truediv__ = MagicMock(
+            return_value=MagicMock(__truediv__=MagicMock(return_value=mock_skill_path))
+        )
 
         result = await run_hunting_phase(
             uuid.uuid4(), "target_discovery", "gathering", {"keyword": "parser"}, "/tmp/work"
@@ -43,11 +49,18 @@ async def test_run_hunting_phase_success():
 
 @pytest.mark.asyncio
 async def test_run_hunting_phase_cli_not_found():
-    with patch("app.workflows.hunting_activities.asyncio.create_subprocess_exec", side_effect=FileNotFoundError), \
-         patch("app.workflows.hunting_activities.SKILLS_DIR") as mock_dir:
+    with (
+        patch(
+            "app.workflows.hunting_activities.asyncio.create_subprocess_exec",
+            side_effect=FileNotFoundError,
+        ),
+        patch("app.workflows.hunting_activities.SKILLS_DIR") as mock_dir,
+    ):
         mock_skill_path = MagicMock()
         mock_skill_path.exists.return_value = False
-        mock_dir.__truediv__ = MagicMock(return_value=MagicMock(__truediv__=MagicMock(return_value=mock_skill_path)))
+        mock_dir.__truediv__ = MagicMock(
+            return_value=MagicMock(__truediv__=MagicMock(return_value=mock_skill_path))
+        )
 
         result = await run_hunting_phase(
             uuid.uuid4(), "target_discovery", "gathering", {}, "/tmp/work"
@@ -63,11 +76,18 @@ async def test_run_hunting_phase_nonzero_exit():
     mock_proc.communicate = AsyncMock(return_value=(b"", b"auth error"))
     mock_proc.returncode = 1
 
-    with patch("app.workflows.hunting_activities.asyncio.create_subprocess_exec", return_value=mock_proc), \
-         patch("app.workflows.hunting_activities.SKILLS_DIR") as mock_dir:
+    with (
+        patch(
+            "app.workflows.hunting_activities.asyncio.create_subprocess_exec",
+            return_value=mock_proc,
+        ),
+        patch("app.workflows.hunting_activities.SKILLS_DIR") as mock_dir,
+    ):
         mock_skill_path = MagicMock()
         mock_skill_path.exists.return_value = False
-        mock_dir.__truediv__ = MagicMock(return_value=MagicMock(__truediv__=MagicMock(return_value=mock_skill_path)))
+        mock_dir.__truediv__ = MagicMock(
+            return_value=MagicMock(__truediv__=MagicMock(return_value=mock_skill_path))
+        )
 
         result = await run_hunting_phase(
             uuid.uuid4(), "target_discovery", "gathering", {}, "/tmp/work"
@@ -83,11 +103,18 @@ async def test_run_hunting_phase_invalid_json():
     mock_proc.communicate = AsyncMock(return_value=(b"not json at all", b""))
     mock_proc.returncode = 0
 
-    with patch("app.workflows.hunting_activities.asyncio.create_subprocess_exec", return_value=mock_proc), \
-         patch("app.workflows.hunting_activities.SKILLS_DIR") as mock_dir:
+    with (
+        patch(
+            "app.workflows.hunting_activities.asyncio.create_subprocess_exec",
+            return_value=mock_proc,
+        ),
+        patch("app.workflows.hunting_activities.SKILLS_DIR") as mock_dir,
+    ):
         mock_skill_path = MagicMock()
         mock_skill_path.exists.return_value = False
-        mock_dir.__truediv__ = MagicMock(return_value=MagicMock(__truediv__=MagicMock(return_value=mock_skill_path)))
+        mock_dir.__truediv__ = MagicMock(
+            return_value=MagicMock(__truediv__=MagicMock(return_value=mock_skill_path))
+        )
 
         result = await run_hunting_phase(
             uuid.uuid4(), "target_discovery", "gathering", {}, "/tmp/work"
@@ -104,11 +131,18 @@ async def test_run_hunting_phase_with_previous_results():
     mock_proc.communicate = AsyncMock(return_value=(output.encode(), b""))
     mock_proc.returncode = 0
 
-    with patch("app.workflows.hunting_activities.asyncio.create_subprocess_exec", return_value=mock_proc) as mock_exec, \
-         patch("app.workflows.hunting_activities.SKILLS_DIR") as mock_dir:
+    with (
+        patch(
+            "app.workflows.hunting_activities.asyncio.create_subprocess_exec",
+            return_value=mock_proc,
+        ) as mock_exec,
+        patch("app.workflows.hunting_activities.SKILLS_DIR") as mock_dir,
+    ):
         mock_skill_path = MagicMock()
         mock_skill_path.exists.return_value = False
-        mock_dir.__truediv__ = MagicMock(return_value=MagicMock(__truediv__=MagicMock(return_value=mock_skill_path)))
+        mock_dir.__truediv__ = MagicMock(
+            return_value=MagicMock(__truediv__=MagicMock(return_value=mock_skill_path))
+        )
 
         result = await run_hunting_phase(
             uuid.uuid4(),
@@ -130,16 +164,21 @@ async def test_run_hunting_phase_includes_skill():
     mock_proc.communicate = AsyncMock(return_value=(output.encode(), b""))
     mock_proc.returncode = 0
 
-    with patch("app.workflows.hunting_activities.asyncio.create_subprocess_exec", return_value=mock_proc) as mock_exec, \
-         patch("app.workflows.hunting_activities.SKILLS_DIR") as mock_dir:
+    with (
+        patch(
+            "app.workflows.hunting_activities.asyncio.create_subprocess_exec",
+            return_value=mock_proc,
+        ) as mock_exec,
+        patch("app.workflows.hunting_activities.SKILLS_DIR") as mock_dir,
+    ):
         mock_skill_path = MagicMock()
         mock_skill_path.exists.return_value = True
         mock_skill_path.read_text.return_value = "# Target Discovery Skill"
-        mock_dir.__truediv__ = MagicMock(return_value=MagicMock(__truediv__=MagicMock(return_value=mock_skill_path)))
-
-        await run_hunting_phase(
-            uuid.uuid4(), "target_discovery", "gathering", {}, "/tmp/work"
+        mock_dir.__truediv__ = MagicMock(
+            return_value=MagicMock(__truediv__=MagicMock(return_value=mock_skill_path))
         )
+
+        await run_hunting_phase(uuid.uuid4(), "target_discovery", "gathering", {}, "/tmp/work")
 
     prompt_arg = mock_exec.call_args[0][2]
     assert "<skill>" in prompt_arg
@@ -261,9 +300,7 @@ async def test_save_findings_non_dict_items():
     async def mock_factory():
         yield mock_session
 
-    phase_results = {
-        "complete": {"results": ["not_a_dict", 42, None]}
-    }
+    phase_results = {"complete": {"results": ["not_a_dict", 42, None]}}
 
     with patch("app.core.database.async_session_factory", mock_factory):
         count = await save_hunting_findings(uuid.uuid4(), "target_discovery", phase_results)

@@ -154,9 +154,7 @@ async def post_process_findings(session_id: UUID, result: AnalysisResult) -> int
 
 
 @activity.defn(name="record_hunting_phase")
-async def record_hunting_phase(
-    session_id: UUID, phase: str, phase_status: str
-) -> None:
+async def record_hunting_phase(session_id: UUID, phase: str, phase_status: str) -> None:
     from app.core.database import async_session_factory
     from app.services.repositories.session import SessionRepository
 
@@ -165,11 +163,14 @@ async def record_hunting_phase(
         await repo.update_phase_data(session_id, phase, phase_status)
         await session.commit()
 
-    await _ws_broadcast(session_id, {
-        "type": "phase_updated",
-        "phase": phase,
-        "status": phase_status,
-    })
+    await _ws_broadcast(
+        session_id,
+        {
+            "type": "phase_updated",
+            "phase": phase,
+            "status": phase_status,
+        },
+    )
 
     activity.logger.info(
         "Phase updated",
@@ -251,9 +252,12 @@ async def record_session_state(session_id: UUID, state: str) -> None:
         await repo.transition(analysis, actual_state)
         await session.commit()
 
-    await _ws_broadcast(session_id, {
-        "type": "state_changed",
-        "state": actual_state.value,
-    })
+    await _ws_broadcast(
+        session_id,
+        {
+            "type": "state_changed",
+            "state": actual_state.value,
+        },
+    )
 
     activity.logger.info("Session state updated", extra={"state": actual_state.value})

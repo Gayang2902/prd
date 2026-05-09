@@ -6,7 +6,6 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from securescope_schemas.agent_interface import (
-    AgentFinding,
     AnalysisContext,
     AnalysisResult,
     CodeScope,
@@ -26,7 +25,6 @@ from app.agents.hunting_agent import (
     _log,
     _parse_findings,
 )
-
 
 # ── _load_skill ──
 
@@ -82,20 +80,22 @@ def test_log_with_progress_and_tokens():
 
 
 def test_parse_findings_valid_json():
-    text = json.dumps({
-        "findings": [
-            {
-                "title": "Buffer overflow",
-                "file_path": "src/parse.c",
-                "line_start": 10,
-                "line_end": 20,
-                "severity": "critical",
-                "category": "memory",
-                "description": "Stack buffer overflow in parse()",
-                "code_snippet": "char buf[8]; strcpy(buf, input);",
-            }
-        ]
-    })
+    text = json.dumps(
+        {
+            "findings": [
+                {
+                    "title": "Buffer overflow",
+                    "file_path": "src/parse.c",
+                    "line_start": 10,
+                    "line_end": 20,
+                    "severity": "critical",
+                    "category": "memory",
+                    "description": "Stack buffer overflow in parse()",
+                    "code_snippet": "char buf[8]; strcpy(buf, input);",
+                }
+            ]
+        }
+    )
     findings = _parse_findings(text)
     assert len(findings) == 1
     assert findings[0].severity == Severity.CRITICAL
@@ -104,18 +104,18 @@ def test_parse_findings_valid_json():
 
 
 def test_parse_findings_with_results_key():
-    text = json.dumps({
-        "results": [
-            {"title": "UAF", "file_path": "x.c", "severity": "high"}
-        ]
-    })
+    text = json.dumps({"results": [{"title": "UAF", "file_path": "x.c", "severity": "high"}]})
     findings = _parse_findings(text)
     assert len(findings) == 1
     assert findings[0].severity == Severity.HIGH
 
 
 def test_parse_findings_embedded_json():
-    text = 'Some preamble text\n{"findings": [{"title": "XSS", "file_path": "a.js", "severity": "medium"}]}\nMore text'
+    text = (
+        "Some preamble text\n"
+        '{"findings": [{"title": "XSS", "file_path": "a.js", "severity": "medium"}]}'
+        "\nMore text"
+    )
     findings = _parse_findings(text)
     assert len(findings) == 1
     assert findings[0].title == "XSS"
@@ -126,12 +126,14 @@ def test_parse_findings_invalid_json():
 
 
 def test_parse_findings_dedup():
-    text = json.dumps({
-        "findings": [
-            {"title": "Bug", "file_path": "a.c", "line_start": 1, "severity": "low"},
-            {"title": "Bug", "file_path": "a.c", "line_start": 1, "severity": "low"},
-        ]
-    })
+    text = json.dumps(
+        {
+            "findings": [
+                {"title": "Bug", "file_path": "a.c", "line_start": 1, "severity": "low"},
+                {"title": "Bug", "file_path": "a.c", "line_start": 1, "severity": "low"},
+            ]
+        }
+    )
     findings = _parse_findings(text)
     assert len(findings) == 1
 
@@ -142,29 +144,29 @@ def test_parse_findings_non_dict_items():
 
 
 def test_parse_findings_unknown_severity():
-    text = json.dumps({
-        "findings": [{"title": "edge", "file_path": "x.c", "severity": "unknown_sev"}]
-    })
+    text = json.dumps(
+        {"findings": [{"title": "edge", "file_path": "x.c", "severity": "unknown_sev"}]}
+    )
     findings = _parse_findings(text)
     assert len(findings) == 1
     assert findings[0].severity == Severity.MEDIUM
 
 
 def test_parse_findings_with_fingerprint():
-    text = json.dumps({
-        "findings": [
-            {"title": "A", "file_path": "a.c", "fingerprint": "fp1", "severity": "low"},
-            {"title": "B", "file_path": "b.c", "fingerprint": "fp1", "severity": "high"},
-        ]
-    })
+    text = json.dumps(
+        {
+            "findings": [
+                {"title": "A", "file_path": "a.c", "fingerprint": "fp1", "severity": "low"},
+                {"title": "B", "file_path": "b.c", "fingerprint": "fp1", "severity": "high"},
+            ]
+        }
+    )
     findings = _parse_findings(text)
     assert len(findings) == 1
 
 
 def test_parse_findings_repo_fallback():
-    text = json.dumps({
-        "findings": [{"title": "T", "repo": "org/lib", "severity": "info"}]
-    })
+    text = json.dumps({"findings": [{"title": "T", "repo": "org/lib", "severity": "info"}]})
     findings = _parse_findings(text)
     assert findings[0].file_path == "org/lib"
 
@@ -235,9 +237,13 @@ async def test_analyze_success():
     mock_usage.input_tokens = 500
     mock_usage.output_tokens = 300
     mock_response = MagicMock()
-    mock_response.content = [MagicMock(text=json.dumps({
-        "findings": [{"title": "vuln", "file_path": "x.c", "severity": "high"}]
-    }))]
+    mock_response.content = [
+        MagicMock(
+            text=json.dumps(
+                {"findings": [{"title": "vuln", "file_path": "x.c", "severity": "high"}]}
+            )
+        )
+    ]
     mock_response.usage = mock_usage
     mock_client.messages.create = AsyncMock(return_value=mock_response)
 
@@ -248,7 +254,11 @@ async def test_analyze_success():
             id=uuid.uuid4(),
             version_sha="v1",
             prompt_template="hunting",
-            ruleset={"skill": "opentarget", "session_type": "target_discovery", "phase": "gathering"},
+            ruleset={
+                "skill": "opentarget",
+                "session_type": "target_discovery",
+                "phase": "gathering",
+            },
         ),
         limits=ResourceLimits(),
     )
@@ -317,7 +327,8 @@ def test_build_user_prompt_specific_phase():
 def test_build_user_prompt_with_previous_results():
     agent = HuntingAgent()
     prompt = agent._build_user_prompt(
-        "target_discovery", "filtering",
+        "target_discovery",
+        "filtering",
         {"previous_results": {"gathering": [{"name": "lib"}]}},
     )
     assert "previous_results" in prompt
@@ -344,5 +355,5 @@ def test_skill_by_type():
 def test_phase_prompts_all_types():
     for stype in ("target_discovery", "zero_day_hunting"):
         assert stype in PHASE_PROMPTS
-        for phase, prompt in PHASE_PROMPTS[stype].items():
+        for _phase, prompt in PHASE_PROMPTS[stype].items():
             assert len(prompt) > 10

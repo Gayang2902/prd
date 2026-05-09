@@ -72,7 +72,15 @@ def _make_hunting_activities(recorded_states, recorded_phases):
     async def mock_cleanup(env):
         pass
 
-    return [mock_record, mock_phase, mock_provision, mock_clone, mock_run_phase, mock_save, mock_cleanup]
+    return [
+        mock_record,
+        mock_phase,
+        mock_provision,
+        mock_clone,
+        mock_run_phase,
+        mock_save,
+        mock_cleanup,
+    ]
 
 
 def test_hunting_workflow_target_discovery():

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import json
 import os
 from collections.abc import AsyncIterator
@@ -106,8 +107,7 @@ PHASE_PROMPTS: dict[str, dict[str, str]] = {
             "검증 결과를 JSON 출력."
         ),
         "complete": (
-            "Phase 6 실행: 최종 보고서.\n"
-            "검증된 finding의 PoC, 임팩트, 권고사항 포함 JSON 출력."
+            "Phase 6 실행: 최종 보고서.\n" "검증된 finding의 PoC, 임팩트, 권고사항 포함 JSON 출력."
         ),
     },
 }
@@ -221,18 +221,25 @@ class HuntingAgent(BaseAgent):
         self._client = None
 
     def _build_user_prompt(self, session_type: str, phase: str, config: dict) -> str:
-        config_clean = {k: v for k, v in config.items() if k not in ("skill", "session_type", "phase", "previous_results")}
+        config_clean = {
+            k: v
+            for k, v in config.items()
+            if k not in ("skill", "session_type", "phase", "previous_results")
+        }
         config_str = json.dumps(config_clean, ensure_ascii=False) if config_clean else "{}"
 
         if phase == "all":
             phase_instruction = "전체 파이프라인을 Phase 0부터 순서대로 실행하라."
         else:
-            phase_instruction = PHASE_PROMPTS.get(session_type, {}).get(phase, f"Phase '{phase}'를 실행하라.")
+            phase_instruction = PHASE_PROMPTS.get(session_type, {}).get(
+                phase, f"Phase '{phase}'를 실행하라."
+            )
 
         previous = config.get("previous_results", {})
         prev_str = ""
         if previous:
-            prev_str = f"\n\n<previous_results>\n{json.dumps(previous, ensure_ascii=False, default=str)[:8000]}\n</previous_results>"
+            prev_json = json.dumps(previous, ensure_ascii=False, default=str)[:8000]
+            prev_str = f"\n\n<previous_results>\n{prev_json}\n</previous_results>"
 
         return (
             f"<config>{config_str}</config>\n"
@@ -253,10 +260,8 @@ def _parse_findings(text: str) -> list[AgentFinding]:
     data: dict[str, Any] = {}
     json_match = re.search(r"\{[\s\S]*\"findings\"[\s\S]*\}", text)
     if json_match:
-        try:
+        with contextlib.suppress(json.JSONDecodeError):
             data = json.loads(json_match.group(0))
-        except json.JSONDecodeError:
-            pass
 
     if not data:
         try:
@@ -282,18 +287,20 @@ def _parse_findings(text: str) -> list[AgentFinding]:
         seen.add(fp)
 
         sev = raw.get("severity", "medium").lower()
-        findings.append(AgentFinding(
-            fingerprint=fp,
-            file_path=file_path,
-            line_start=raw.get("line_start", 0),
-            line_end=raw.get("line_end", raw.get("line_start", 0)),
-            severity=SEVERITY_MAP.get(sev, Severity.MEDIUM),
-            category=raw.get("category", "hunting"),
-            title=str(raw.get("title", ""))[:200],
-            description=str(raw.get("description", ""))[:2000],
-            code_snippet=str(raw.get("code_snippet", ""))[:1000],
-            confidence=float(raw.get("confidence", raw.get("score", 0.7))),
-            metadata=raw.get("extras", {}),
-        ))
+        findings.append(
+            AgentFinding(
+                fingerprint=fp,
+                file_path=file_path,
+                line_start=raw.get("line_start", 0),
+                line_end=raw.get("line_end", raw.get("line_start", 0)),
+                severity=SEVERITY_MAP.get(sev, Severity.MEDIUM),
+                category=raw.get("category", "hunting"),
+                title=str(raw.get("title", ""))[:200],
+                description=str(raw.get("description", ""))[:2000],
+                code_snippet=str(raw.get("code_snippet", ""))[:1000],
+                confidence=float(raw.get("confidence", raw.get("score", 0.7))),
+                metadata=raw.get("extras", {}),
+            )
+        )
 
     return findings

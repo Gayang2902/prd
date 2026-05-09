@@ -72,8 +72,8 @@ def _mock_session(**overrides):
     s.session_type = overrides.get("session_type", SessionType.STATIC_ANALYSIS)
     s.state = overrides.get("state", SessionState.QUEUED)
     s.priority = overrides.get("priority", SessionPriority.NORMAL)
-    s.current_phase = overrides.get("current_phase", None)
-    s.phase_data = overrides.get("phase_data", None)
+    s.current_phase = overrides.get("current_phase")
+    s.phase_data = overrides.get("phase_data")
     s.started_at = _NOW
     s.completed_at = overrides.get("completed_at")
     s.token_usage = overrides.get("token_usage", 0)
@@ -94,7 +94,7 @@ def _mock_finding(**overrides):
     f.title = overrides.get("title", "XSS Vulnerability")
     f.description = overrides.get("description", "Reflected XSS")
     f.regression_status = overrides.get("regression_status", RegressionStatus.NEW)
-    f.extras = overrides.get("extras", None)
+    f.extras = overrides.get("extras")
     f.created_at = _NOW
     f.updated_at = _NOW
     return f

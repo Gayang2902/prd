@@ -95,7 +95,16 @@ class ClaudeCodeAgent(BaseAgent):
         return AgentMetadata(
             name="claude-code",
             version="1.0.0",
-            supported_languages=["c", "cpp", "rust", "javascript", "typescript", "python", "java", "go"],
+            supported_languages=[
+                "c",
+                "cpp",
+                "rust",
+                "javascript",
+                "typescript",
+                "python",
+                "java",
+                "go",
+            ],
             max_input_size_bytes=500_000_000,
             cost_profile={"per_run_usd": 1.0, "model": "claude-code"},
             description="Claude Code CLI 직접 실행 — 하위 쉘에서 코드 분석 및 헌팅 수행",
@@ -113,7 +122,9 @@ class ClaudeCodeAgent(BaseAgent):
         yield _log(f"Claude Code 헌팅 시작: {session_type} / phase={phase}", progress=0.05)
 
         phase_instruction = _get_phase_instruction(session_type, phase)
-        config_clean = {k: v for k, v in hunting_config.items() if k not in ("skill", "session_type", "phase")}
+        config_clean = {
+            k: v for k, v in hunting_config.items() if k not in ("skill", "session_type", "phase")
+        }
 
         prompt = HUNTING_PROMPT.format(
             session_type=session_type,
@@ -125,9 +136,12 @@ class ClaudeCodeAgent(BaseAgent):
 
         cmd = [
             CLAUDE_CMD,
-            "-p", prompt,
-            "--output-format", "json",
-            "--max-turns", "30",
+            "-p",
+            prompt,
+            "--output-format",
+            "json",
+            "--max-turns",
+            "30",
         ]
 
         yield _log("Claude Code 프로세스 실행 중", progress=0.10)
@@ -142,7 +156,9 @@ class ClaudeCodeAgent(BaseAgent):
             stdout_bytes, stderr_bytes = await proc.communicate()
         except FileNotFoundError:
             yield _log("Claude Code CLI를 찾을 수 없음", progress=1.0)
-            yield AnalysisResult(findings=[], tokens_used=0, cost_usd=0.0, raw_output="claude command not found")
+            yield AnalysisResult(
+                findings=[], tokens_used=0, cost_usd=0.0, raw_output="claude command not found"
+            )
             return
 
         if proc.returncode != 0:
@@ -178,7 +194,10 @@ def _get_phase_instruction(session_type: str, phase: str) -> str:
         return "Execute the full analysis pipeline from start to finish."
     instructions: dict[str, dict[str, str]] = {
         "target_discovery": {
-            "gathering": "Phase 1: Gather candidate targets from package registries. Output 40-60 candidates.",
+            "gathering": (
+                "Phase 1: Gather candidate targets from package registries."
+                " Output 40-60 candidates."
+            ),
             "filtering": "Phase 2: Filter out inactive/low-risk candidates. Output filtered list.",
             "scoring": "Phase 3: Score remaining candidates by crackability (1-10).",
             "shortlisting": "Phase 4: Select primary + 2 backup targets with fuzzing strategy.",
@@ -230,19 +249,21 @@ def _parse_findings(text: str) -> list[AgentFinding]:
         seen.add(fp)
 
         sev = raw.get("severity", "medium").lower()
-        findings.append(AgentFinding(
-            fingerprint=fp,
-            file_path=file_path,
-            line_start=raw.get("line_start", 0),
-            line_end=raw.get("line_end", raw.get("line_start", 0)),
-            severity=SEVERITY_MAP.get(sev, Severity.MEDIUM),
-            category=raw.get("category", "hunting"),
-            title=str(raw.get("title", ""))[:200],
-            description=str(raw.get("description", ""))[:2000],
-            code_snippet=str(raw.get("code_snippet", ""))[:1000],
-            confidence=float(raw.get("confidence", 0.7)),
-            metadata=raw.get("metadata") or {},
-        ))
+        findings.append(
+            AgentFinding(
+                fingerprint=fp,
+                file_path=file_path,
+                line_start=raw.get("line_start", 0),
+                line_end=raw.get("line_end", raw.get("line_start", 0)),
+                severity=SEVERITY_MAP.get(sev, Severity.MEDIUM),
+                category=raw.get("category", "hunting"),
+                title=str(raw.get("title", ""))[:200],
+                description=str(raw.get("description", ""))[:2000],
+                code_snippet=str(raw.get("code_snippet", ""))[:1000],
+                confidence=float(raw.get("confidence", 0.7)),
+                metadata=raw.get("metadata") or {},
+            )
+        )
 
     return findings
 

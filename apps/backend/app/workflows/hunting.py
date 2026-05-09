@@ -63,7 +63,7 @@ class HuntingWorkflow:
         short = timedelta(seconds=10)
 
         phases = _PHASES_BY_TYPE[ctx.session_type]
-        config = (ctx.analysis_context.preset.ruleset or {})
+        config = ctx.analysis_context.preset.ruleset or {}
         env_handle: EnvHandle | None = None
         phase_results: dict[str, dict] = {}
 

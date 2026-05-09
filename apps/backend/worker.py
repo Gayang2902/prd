@@ -5,6 +5,7 @@ Usage:
 """
 
 import asyncio
+import logging
 
 from temporalio.client import Client
 from temporalio.worker import Worker
@@ -25,6 +26,7 @@ from app.workflows.hunting import HuntingWorkflow
 from app.workflows.hunting_activities import run_hunting_phase, save_hunting_findings
 
 TASK_QUEUE = "analysis-queue"
+logger = logging.getLogger(__name__)
 
 
 async def main() -> None:
@@ -48,7 +50,7 @@ async def main() -> None:
         ],
     )
 
-    print(f"Worker listening on queue '{TASK_QUEUE}' (temporal: {settings.temporal_host})")
+    logger.info("Worker listening on queue '%s' (temporal: %s)", TASK_QUEUE, settings.temporal_host)
     await worker.run()
 
 

@@ -2,14 +2,13 @@
 
 import json
 import uuid
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from securescope_schemas.agent_interface import (
     AnalysisContext,
     AnalysisResult,
     CodeScope,
-    LogEvent,
     PresetConfig,
     ResourceLimits,
     Severity,
@@ -21,7 +20,6 @@ from app.agents.claude_code_agent import (
     _parse_findings,
     _safe_json,
 )
-
 
 # ── _get_phase_instruction ──
 
@@ -57,7 +55,9 @@ def test_parse_findings_json_block():
 
 
 def test_parse_findings_raw_json():
-    text = json.dumps({"findings": [{"title": "SQLi", "file_path": "b.py", "severity": "critical"}]})
+    text = json.dumps(
+        {"findings": [{"title": "SQLi", "file_path": "b.py", "severity": "critical"}]}
+    )
     findings = _parse_findings(text)
     assert len(findings) == 1
     assert findings[0].severity == Severity.CRITICAL
@@ -70,7 +70,11 @@ def test_parse_findings_with_results_key():
 
 
 def test_parse_findings_embedded():
-    text = 'Some text before\n{"findings": [{"title": "UAF", "file_path": "d.c", "severity": "medium"}]}\nafter'
+    text = (
+        "Some text before\n"
+        '{"findings": [{"title": "UAF", "file_path": "d.c", "severity": "medium"}]}'
+        "\nafter"
+    )
     findings = _parse_findings(text)
     assert len(findings) == 1
 
@@ -80,10 +84,14 @@ def test_parse_findings_invalid():
 
 
 def test_parse_findings_dedup():
-    text = json.dumps({"findings": [
-        {"title": "A", "file_path": "x.c", "line_start": 1, "severity": "low"},
-        {"title": "A", "file_path": "x.c", "line_start": 1, "severity": "low"},
-    ]})
+    text = json.dumps(
+        {
+            "findings": [
+                {"title": "A", "file_path": "x.c", "line_start": 1, "severity": "low"},
+                {"title": "A", "file_path": "x.c", "line_start": 1, "severity": "low"},
+            ]
+        }
+    )
     assert len(_parse_findings(text)) == 1
 
 
@@ -98,10 +106,14 @@ def test_parse_findings_non_list():
 
 
 def test_parse_findings_fingerprint_dedup():
-    text = json.dumps({"findings": [
-        {"title": "A", "file_path": "a.c", "fingerprint": "fp1", "severity": "low"},
-        {"title": "B", "file_path": "b.c", "fingerprint": "fp1", "severity": "high"},
-    ]})
+    text = json.dumps(
+        {
+            "findings": [
+                {"title": "A", "file_path": "a.c", "fingerprint": "fp1", "severity": "low"},
+                {"title": "B", "file_path": "b.c", "fingerprint": "fp1", "severity": "high"},
+            ]
+        }
+    )
     assert len(_parse_findings(text)) == 1
 
 
@@ -136,8 +148,10 @@ async def test_prepare():
         session_id=uuid.uuid4(),
         scope=CodeScope(repo_path="/tmp/repo", commit_sha="abc123"),
         preset=PresetConfig(
-            id=uuid.uuid4(), version_sha="v1",
-            prompt_template="hunting", ruleset={},
+            id=uuid.uuid4(),
+            version_sha="v1",
+            prompt_template="hunting",
+            ruleset={},
         ),
         limits=ResourceLimits(),
     )
@@ -164,25 +178,34 @@ async def test_analyze_success():
     agent._repo_path = "/tmp"
     agent._commit_sha = "HEAD"
 
-    output = json.dumps({
-        "result": json.dumps({
-            "findings": [{"title": "vuln", "file_path": "x.c", "severity": "high"}]
-        }),
-        "cost_usd": 0.5,
-    })
+    output = json.dumps(
+        {
+            "result": json.dumps(
+                {"findings": [{"title": "vuln", "file_path": "x.c", "severity": "high"}]}
+            ),
+            "cost_usd": 0.5,
+        }
+    )
 
     mock_proc = AsyncMock()
     mock_proc.communicate = AsyncMock(return_value=(output.encode(), b""))
     mock_proc.returncode = 0
 
-    with patch("app.agents.claude_code_agent.asyncio.create_subprocess_exec", return_value=mock_proc):
+    with patch(
+        "app.agents.claude_code_agent.asyncio.create_subprocess_exec", return_value=mock_proc
+    ):
         ctx = AnalysisContext(
             session_id=uuid.uuid4(),
             scope=CodeScope(repo_path="/tmp", commit_sha="HEAD"),
             preset=PresetConfig(
-                id=uuid.uuid4(), version_sha="v1",
+                id=uuid.uuid4(),
+                version_sha="v1",
                 prompt_template="hunting",
-                ruleset={"skill": "opentarget", "session_type": "target_discovery", "phase": "gathering"},
+                ruleset={
+                    "skill": "opentarget",
+                    "session_type": "target_discovery",
+                    "phase": "gathering",
+                },
             ),
             limits=ResourceLimits(),
         )
@@ -209,13 +232,17 @@ async def test_analyze_process_error():
     mock_proc.communicate = AsyncMock(return_value=(b"", b"Error occurred"))
     mock_proc.returncode = 1
 
-    with patch("app.agents.claude_code_agent.asyncio.create_subprocess_exec", return_value=mock_proc):
+    with patch(
+        "app.agents.claude_code_agent.asyncio.create_subprocess_exec", return_value=mock_proc
+    ):
         ctx = AnalysisContext(
             session_id=uuid.uuid4(),
             scope=CodeScope(repo_path="/tmp", commit_sha="HEAD"),
             preset=PresetConfig(
-                id=uuid.uuid4(), version_sha="v1",
-                prompt_template="hunting", ruleset={},
+                id=uuid.uuid4(),
+                version_sha="v1",
+                prompt_template="hunting",
+                ruleset={},
             ),
             limits=ResourceLimits(),
         )
@@ -238,13 +265,17 @@ async def test_analyze_command_not_found():
     agent._repo_path = "/tmp"
     agent._commit_sha = "HEAD"
 
-    with patch("app.agents.claude_code_agent.asyncio.create_subprocess_exec", side_effect=FileNotFoundError):
+    with patch(
+        "app.agents.claude_code_agent.asyncio.create_subprocess_exec", side_effect=FileNotFoundError
+    ):
         ctx = AnalysisContext(
             session_id=uuid.uuid4(),
             scope=CodeScope(repo_path="/tmp", commit_sha="HEAD"),
             preset=PresetConfig(
-                id=uuid.uuid4(), version_sha="v1",
-                prompt_template="hunting", ruleset={},
+                id=uuid.uuid4(),
+                version_sha="v1",
+                prompt_template="hunting",
+                ruleset={},
             ),
             limits=ResourceLimits(),
         )

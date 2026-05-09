@@ -6,7 +6,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from app.models.analysis_session import SessionPriority, SessionState, SessionType
+from app.models.analysis_session import SessionState, SessionType
 from app.models.finding_status import VerificationStatus
 from app.models.project import Priority, ProjectStatus
 from app.schemas.project import ProjectCreate, ProjectUpdate
@@ -363,9 +363,7 @@ async def test_session_update_phase_data_with_extra() -> None:
     db.get = AsyncMock(return_value=existing)
     repo = SessionRepository(db)
 
-    result = await repo.update_phase_data(
-        uuid.uuid4(), "filtering", "running", {"progress": 50}
-    )
+    result = await repo.update_phase_data(uuid.uuid4(), "filtering", "running", {"progress": 50})
     assert result.phase_data["phases"]["filtering"]["status"] == "running"
     assert result.phase_data["phases"]["filtering"]["progress"] == 50
     assert result.phase_data["phases"]["gathering"]["status"] == "done"

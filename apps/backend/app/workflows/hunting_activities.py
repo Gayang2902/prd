@@ -2,7 +2,6 @@ import asyncio
 import hashlib
 import json
 import os
-from decimal import Decimal
 from pathlib import Path
 from uuid import UUID
 
@@ -23,10 +22,15 @@ SKILL_BY_TYPE: dict[str, str] = {
 
 PHASE_PROMPTS: dict[str, dict[str, str]] = {
     "target_discovery": {
-        "gathering": "Phase 1: 병렬 후보 수집. 3개 검색 경로에서 40~60개 후보 수집. JSON 배열 출력.",
+        "gathering": (
+            "Phase 1: 병렬 후보 수집. 3개 검색 경로에서 40~60개 후보 수집." " JSON 배열 출력."
+        ),
         "filtering": "Phase 2: 빠른 필터링. 규칙 위반 항목 제거. 남은 후보 JSON 출력.",
         "scoring": "Phase 3: Crackability 스코어링(1~10). 점수순 정렬 JSON 출력.",
-        "shortlisting": "Phase 4-6: Patch-diff + 구조 분석 + 최종 선택. primary 1 + backup 2 선정. JSON 출력.",
+        "shortlisting": (
+            "Phase 4-6: Patch-diff + 구조 분석 + 최종 선택."
+            " primary 1 + backup 2 선정. JSON 출력."
+        ),
         "complete": "최종 보고서. 타겟 요약, crackability, 퍼징 전략, 진입점 포함 JSON 출력.",
     },
     "zero_day_hunting": {
@@ -40,9 +44,7 @@ PHASE_PROMPTS: dict[str, dict[str, str]] = {
     },
 }
 
-OUTPUT_SCHEMA = (
-    '응답은 JSON만 출력: {"phase": "...", "status": "done", "results": [...]}'
-)
+OUTPUT_SCHEMA = '응답은 JSON만 출력: {"phase": "...", "status": "done", "results": [...]}'
 
 
 @activity.defn(name="run_hunting_phase")
@@ -63,7 +65,9 @@ async def run_hunting_phase(
     previous = config.get("previous_results", {})
     prev_str = ""
     if previous:
-        prev_str = f"\n\n이전 페이즈 결과:\n{json.dumps(previous, ensure_ascii=False, default=str)[:8000]}"
+        prev_str = (
+            f"\n\n이전 페이즈 결과:\n{json.dumps(previous, ensure_ascii=False, default=str)[:8000]}"
+        )
 
     config_clean = {k: v for k, v in config.items() if k != "previous_results"}
 
@@ -96,7 +100,9 @@ async def run_hunting_phase(
 
     if proc.returncode != 0:
         err = stderr_bytes.decode(errors="replace")[:2000]
-        activity.logger.error("Claude Code CLI failed", extra={"phase": phase, "returncode": proc.returncode})
+        activity.logger.error(
+            "Claude Code CLI failed", extra={"phase": phase, "returncode": proc.returncode}
+        )
         return {"phase": phase, "status": "failed", "error": err}
 
     stdout_text = stdout_bytes.decode(errors="replace")
@@ -107,8 +113,7 @@ async def run_hunting_phase(
         result_text = stdout_text
 
     try:
-        result = json.loads(result_text)
-        return result
+        return json.loads(result_text)
     except (json.JSONDecodeError, TypeError):
         return {"phase": phase, "status": "done", "raw": result_text[:10000]}
 

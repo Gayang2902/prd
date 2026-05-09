@@ -52,13 +52,17 @@ async def seed() -> None:
             id=HUNTING_AGENT_ID,
             name="hunting-agent",
             version="1.0.0",
-            metadata_={"description": "Anthropic API 직접 호출 — opentarget/openresearch 스킬 기반 헌팅"},
+            metadata_={
+                "description": "Anthropic API 직접 호출 — opentarget/openresearch 스킬 기반 헌팅"
+            },
         )
         claude_code_agent = Agent(
             id=CLAUDE_CODE_AGENT_ID,
             name="claude-code",
             version="1.0.0",
-            metadata_={"description": "Claude Code CLI 직접 실행 — 하위 쉘에서 코드 분석 및 헌팅 수행"},
+            metadata_={
+                "description": "Claude Code CLI 직접 실행 — 하위 쉘에서 코드 분석 및 헌팅 수행"
+            },
         )
         session.add(agent)
         session.add(hunting_agent)
