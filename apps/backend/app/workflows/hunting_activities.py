@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any
 from uuid import UUID
 
+import redis.asyncio as aioredis
 import structlog
 from temporalio import activity
 
@@ -47,6 +48,37 @@ PHASE_PROMPTS: dict[str, dict[str, str]] = {
 
 OUTPUT_SCHEMA = '응답은 JSON만 출력: {"phase": "...", "status": "done", "results": [...]}'
 
+_redis: aioredis.Redis | None = None
+
+
+async def _broadcast(session_id: UUID, event: dict[str, Any]) -> None:
+    global _redis  # noqa: PLW0603
+    try:
+        if _redis is None:
+            _redis = aioredis.from_url(settings.redis_url, decode_responses=True)
+        channel = f"ws:session:{session_id}"
+        payload = json.dumps({"event": event, "exclude_id": None}, ensure_ascii=False)
+        await _redis.publish(channel, payload)
+    except Exception:
+        logger.warning("broadcast_failed", session_id=str(session_id))
+
+
+def _extract_tool_calls(message: dict[str, Any]) -> list[dict[str, str]]:
+    """Extract tool_use blocks from an assistant message."""
+    content = message.get("content", [])
+    if not isinstance(content, list):
+        return []
+    tools: list[dict[str, str]] = []
+    for block in content:
+        if isinstance(block, dict) and block.get("type") == "tool_use":
+            tools.append(
+                {
+                    "tool": block.get("name", "unknown"),
+                    "input_preview": json.dumps(block.get("input", {}), ensure_ascii=False)[:200],
+                }
+            )
+    return tools
+
 
 @activity.defn(name="run_hunting_phase")
 async def run_hunting_phase(
@@ -67,7 +99,8 @@ async def run_hunting_phase(
     prev_str = ""
     if previous:
         prev_str = (
-            f"\n\n이전 페이즈 결과:\n{json.dumps(previous, ensure_ascii=False, default=str)[:8000]}"
+            f"\n\n이전 페이즈 결과:\n"
+            f"{json.dumps(previous, ensure_ascii=False, default=str)[:8000]}"
         )
 
     config_clean = {k: v for k, v in config.items() if k != "previous_results"}
@@ -82,10 +115,18 @@ async def run_hunting_phase(
         f"{OUTPUT_SCHEMA}"
     )
 
-    cmd = [CLAUDE_CMD, "-p", prompt, "--output-format", "json", "--max-turns", "30"]
+    cmd = [CLAUDE_CMD, "-p", prompt, "--output-format", "stream-json", "--max-turns", "30"]
     cwd = work_dir if os.path.isdir(work_dir) else None
 
-    activity.logger.info("Running hunting phase", extra={"phase": phase})
+    await _broadcast(
+        session_id,
+        {
+            "type": "agent_event",
+            "event": "phase_start",
+            "phase": phase,
+            "session_type": session_type,
+        },
+    )
 
     try:
         proc = await asyncio.create_subprocess_exec(
@@ -94,30 +135,113 @@ async def run_hunting_phase(
             stderr=asyncio.subprocess.PIPE,
             cwd=cwd,
         )
-        stdout_bytes, stderr_bytes = await proc.communicate()
     except FileNotFoundError:
         activity.logger.error("Claude Code CLI not found")
+        await _broadcast(
+            session_id,
+            {
+                "type": "agent_event",
+                "event": "error",
+                "phase": phase,
+                "message": "claude command not found",
+            },
+        )
         return {"phase": phase, "status": "failed", "error": "claude command not found"}
 
-    if proc.returncode != 0:
+    trace: list[dict[str, Any]] = []
+    num_turns = 0
+    total_cost = 0.0
+    total_duration_ms = 0
+    result_text = ""
+
+    assert proc.stdout is not None
+    async for raw_line in proc.stdout:
+        line = raw_line.decode(errors="replace").strip()
+        if not line:
+            continue
+
+        try:
+            event = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+
+        event_type = event.get("type", "")
+
+        activity.heartbeat({"phase": phase, "event_type": event_type, "turns": num_turns})
+
+        if event_type == "assistant":
+            num_turns += 1
+            tool_calls = _extract_tool_calls(event.get("message", {}))
+            trace_entry: dict[str, Any] = {"type": "turn", "turn": num_turns}
+            if tool_calls:
+                trace_entry["tool_calls"] = tool_calls
+            trace.append(trace_entry)
+
+            await _broadcast(
+                session_id,
+                {
+                    "type": "agent_event",
+                    "event": "turn",
+                    "phase": phase,
+                    "turn": num_turns,
+                    "tool_calls": [t["tool"] for t in tool_calls],
+                },
+            )
+
+        elif event_type == "result":
+            result_text = event.get("result", "")
+            total_cost = event.get("cost_usd", 0) or 0
+            total_duration_ms = event.get("duration_ms", 0) or 0
+            num_turns = event.get("num_turns", num_turns)
+            await _broadcast(
+                session_id,
+                {
+                    "type": "agent_event",
+                    "event": "phase_done",
+                    "phase": phase,
+                    "num_turns": num_turns,
+                    "cost_usd": total_cost,
+                    "duration_ms": total_duration_ms,
+                },
+            )
+
+    await proc.wait()
+
+    if proc.returncode != 0 and not result_text:
+        if proc.stderr:
+            stderr_bytes = await proc.stderr.read()
+        else:
+            stderr_bytes = b""
         err = stderr_bytes.decode(errors="replace")[:2000]
         activity.logger.error(
-            "Claude Code CLI failed", extra={"phase": phase, "returncode": proc.returncode}
+            "Claude Code CLI failed",
+            extra={"phase": phase, "returncode": proc.returncode},
+        )
+        await _broadcast(
+            session_id,
+            {
+                "type": "agent_event",
+                "event": "error",
+                "phase": phase,
+                "message": err[:500],
+            },
         )
         return {"phase": phase, "status": "failed", "error": err}
 
-    stdout_text = stdout_bytes.decode(errors="replace")
-    try:
-        claude_output = json.loads(stdout_text)
-        result_text = claude_output.get("result", stdout_text)
-    except (json.JSONDecodeError, TypeError):
-        result_text = stdout_text
-
     try:
         parsed: dict[str, Any] = json.loads(result_text)
-        return parsed
     except (json.JSONDecodeError, TypeError):
-        return {"phase": phase, "status": "done", "raw": result_text[:10000]}
+        parsed = {"phase": phase, "status": "done", "raw": result_text[:10000]}
+
+    parsed["_trace"] = {
+        "num_turns": num_turns,
+        "cost_usd": total_cost,
+        "duration_ms": total_duration_ms,
+        "tool_calls_count": sum(len(t.get("tool_calls", [])) for t in trace),
+        "events": trace[-30:],
+    }
+
+    return parsed
 
 
 def _fingerprint(text: str) -> str:
@@ -206,12 +330,15 @@ async def save_hunting_findings(
 
         analysis = await session.get(AnalysisSession, session_id)
         if analysis is not None:
+            trace_summary: dict[str, Any] = {"total_findings": count, "phases_completed": []}
+            for pname, pdata in phase_results.items():
+                trace_summary["phases_completed"].append(pname)
+                if isinstance(pdata, dict) and "_trace" in pdata:
+                    trace_summary[f"{pname}_trace"] = pdata["_trace"]
+
             analysis.phase_data = {
                 **(analysis.phase_data or {}),
-                "results_summary": {
-                    "total_findings": count,
-                    "phases_completed": list(phase_results.keys()),
-                },
+                "results_summary": trace_summary,
             }
 
         await session.commit()

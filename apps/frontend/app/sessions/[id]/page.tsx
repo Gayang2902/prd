@@ -5,7 +5,7 @@ import { use } from "react";
 import { useSession } from "@/lib/hooks/use-sessions";
 import { useFindings } from "@/lib/hooks/use-findings";
 import { useTargetCandidates } from "@/lib/hooks/use-hunting";
-import { useSessionLive } from "@/lib/hooks/use-session-live";
+import { useSessionLive, type AgentEvent } from "@/lib/hooks/use-session-live";
 import { getLogsUrl } from "@/lib/api/sessions";
 import type { Session } from "@/lib/api/sessions";
 import { Badge } from "@/components/ui/badge";
@@ -35,6 +35,76 @@ const SEVERITY_COLOR: Record<string, string> = {
   low: "text-[#8be9fd]",
   info: "text-[#6272a4]",
 };
+
+const EVENT_ICON: Record<string, string> = {
+  phase_start: "▶",
+  turn: "↻",
+  phase_done: "✓",
+  error: "✗",
+};
+
+function AgentActivityFeed({ events }: { events: AgentEvent[] }) {
+  if (events.length === 0) return null;
+
+  const lastDone = [...events].reverse().find((e) => e.event === "phase_done");
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <CardTitle className="text-sm font-medium text-muted-foreground">
+          에이전트 활동 ({events.length}건)
+        </CardTitle>
+        {lastDone && (
+          <div className="flex items-center gap-3 text-xs text-muted-foreground">
+            <span>턴: {lastDone.num_turns}</span>
+            <span>비용: ${lastDone.cost_usd?.toFixed(4)}</span>
+            <span>소요: {((lastDone.duration_ms ?? 0) / 1000).toFixed(1)}s</span>
+          </div>
+        )}
+      </CardHeader>
+      <CardContent>
+        <div className="h-64 overflow-y-auto rounded bg-muted p-3 font-mono text-xs space-y-0.5">
+          {events.map((e, i) => (
+            <div key={i} className="flex gap-2">
+              <span className="text-muted-foreground shrink-0 w-16">
+                {new Date(e.ts).toLocaleTimeString("ko-KR")}
+              </span>
+              <span className="shrink-0 w-4">
+                {EVENT_ICON[e.event] ?? "·"}
+              </span>
+              <span className="shrink-0 text-muted-foreground w-20">
+                {e.phase}
+              </span>
+              <span>
+                {e.event === "phase_start" && (
+                  <span className="text-[#8be9fd]">페이즈 시작</span>
+                )}
+                {e.event === "turn" && (
+                  <span>
+                    턴 #{e.turn}
+                    {e.tool_calls && e.tool_calls.length > 0 && (
+                      <span className="text-[#ffb86c] ml-2">
+                        [{e.tool_calls.join(", ")}]
+                      </span>
+                    )}
+                  </span>
+                )}
+                {e.event === "phase_done" && (
+                  <span className="text-[#50fa7b]">
+                    완료 — {e.num_turns}턴, ${e.cost_usd?.toFixed(4)}, {((e.duration_ms ?? 0) / 1000).toFixed(1)}s
+                  </span>
+                )}
+                {e.event === "error" && (
+                  <span className="text-[#ff5555]">{e.message}</span>
+                )}
+              </span>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
 function TargetResults({ sessionId }: { sessionId: string }) {
   const { data: targets } = useTargetCandidates(sessionId);
@@ -124,6 +194,79 @@ function ZeroDayResults({ sessionId }: { sessionId: string }) {
   );
 }
 
+function TraceStats({ session }: { session: Session }) {
+  const pd = session.phase_data as Record<string, unknown> | null;
+  const summary = pd?.results_summary as Record<string, unknown> | undefined;
+  if (!summary) return null;
+
+  const phases = (summary.phases_completed as string[]) ?? [];
+  const traceEntries = phases
+    .map((p) => {
+      const t = summary[`${p}_trace`] as Record<string, number> | undefined;
+      return t ? { phase: p, ...t } : null;
+    })
+    .filter(Boolean) as Array<{ phase: string; num_turns: number; cost_usd: number; duration_ms: number; tool_calls_count: number }>;
+
+  if (traceEntries.length === 0) return null;
+
+  const totalCost = traceEntries.reduce((s, t) => s + (t.cost_usd ?? 0), 0);
+  const totalTurns = traceEntries.reduce((s, t) => s + (t.num_turns ?? 0), 0);
+  const totalTools = traceEntries.reduce((s, t) => s + (t.tool_calls_count ?? 0), 0);
+  const totalDuration = traceEntries.reduce((s, t) => s + (t.duration_ms ?? 0), 0);
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-sm font-medium text-muted-foreground">
+          실행 트레이스
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <div className="grid grid-cols-4 gap-4 text-sm">
+          <div>
+            <span className="text-muted-foreground">총 턴</span>
+            <p className="text-lg font-bold tabular-nums">{totalTurns}</p>
+          </div>
+          <div>
+            <span className="text-muted-foreground">도구 호출</span>
+            <p className="text-lg font-bold tabular-nums">{totalTools}</p>
+          </div>
+          <div>
+            <span className="text-muted-foreground">총 비용</span>
+            <p className="text-lg font-bold tabular-nums">${totalCost.toFixed(4)}</p>
+          </div>
+          <div>
+            <span className="text-muted-foreground">총 소요</span>
+            <p className="text-lg font-bold tabular-nums">{(totalDuration / 1000).toFixed(1)}s</p>
+          </div>
+        </div>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>페이즈</TableHead>
+              <TableHead>턴</TableHead>
+              <TableHead>도구 호출</TableHead>
+              <TableHead>비용</TableHead>
+              <TableHead>소요 시간</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {traceEntries.map((t) => (
+              <TableRow key={t.phase}>
+                <TableCell className="text-xs font-medium">{t.phase}</TableCell>
+                <TableCell className="text-xs tabular-nums">{t.num_turns}</TableCell>
+                <TableCell className="text-xs tabular-nums">{t.tool_calls_count}</TableCell>
+                <TableCell className="text-xs tabular-nums">${t.cost_usd.toFixed(4)}</TableCell>
+                <TableCell className="text-xs tabular-nums">{(t.duration_ms / 1000).toFixed(1)}s</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function SessionDetailPage({
   params,
 }: {
@@ -131,7 +274,7 @@ export default function SessionDetailPage({
 }) {
   const { id } = use(params);
   const { data: session, isLoading, error } = useSession(id);
-  useSessionLive(id);
+  const { agentEvents } = useSessionLive(id);
 
   if (isLoading) {
     return (
@@ -145,7 +288,7 @@ export default function SessionDetailPage({
   if (!session) return null;
 
   const isActive = !["completed", "failed", "canceled"].includes(session.state);
-  const logsUrl = isActive ? getLogsUrl(id) : null;
+  const logsUrl = isActive && !isHuntingSession(session) ? getLogsUrl(id) : null;
 
   return (
     <div className="mx-auto max-w-5xl p-6 space-y-6">
@@ -263,6 +406,14 @@ export default function SessionDetailPage({
         </CardContent>
       </Card>
 
+      {isHuntingSession(session) && isActive && (
+        <AgentActivityFeed events={agentEvents} />
+      )}
+
+      {isHuntingSession(session) && !isActive && (
+        <TraceStats session={session} />
+      )}
+
       {session.session_type === "target_discovery" && (
         <TargetResults sessionId={id} />
       )}
@@ -270,7 +421,7 @@ export default function SessionDetailPage({
         <ZeroDayResults sessionId={id} />
       )}
 
-      <LogStream url={logsUrl} />
+      {logsUrl && <LogStream url={logsUrl} />}
     </div>
   );
 }
