@@ -35,8 +35,6 @@ export function NewSessionDialog({ projectId }: Props) {
   const [diffBaseSha, setDiffBaseSha] = useState("");
   const [agentId, setAgentId] = useState("");
   const [presetId, setPresetId] = useState("");
-  const [includePaths, setIncludePaths] = useState("");
-
   const createSession = useCreateSession(projectId);
   const { data: agents } = useAgents();
   const { data: presets } = usePresets();
@@ -132,7 +130,6 @@ export function NewSessionDialog({ projectId }: Props) {
               value={branch}
               onChange={(e) => setBranch(e.target.value)}
               placeholder="main, release-1.4, feat/login..."
-              required
             />
           </div>
 
@@ -155,16 +152,6 @@ export function NewSessionDialog({ projectId }: Props) {
                 placeholder="diff 분석 시 기준점"
               />
             </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="include">포함 경로 (선택)</Label>
-            <Input
-              id="include"
-              value={includePaths}
-              onChange={(e) => setIncludePaths(e.target.value)}
-              placeholder="src/api, src/auth (쉼표 구분)"
-            />
           </div>
 
           {createSession.error && (
