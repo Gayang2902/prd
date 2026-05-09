@@ -967,6 +967,42 @@ def test_create_user_success() -> None:
 # ── Hunting ──
 
 
+def test_list_hunting_sessions() -> None:
+    from app.api.v1.hunting import _get_repo
+
+    mock_repo = AsyncMock()
+    s1 = _mock_session(session_type=SessionType.TARGET_DISCOVERY)
+    s2 = _mock_session(session_type=SessionType.ZERO_DAY_HUNTING)
+    mock_repo.list_hunting.return_value = [s1, s2]
+    app.dependency_overrides[_get_repo] = lambda: mock_repo
+
+    client = TestClient(app, raise_server_exceptions=False)
+    resp = client.get("/api/v1/hunting/sessions")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert len(data) == 2
+    mock_repo.list_hunting.assert_awaited_once_with(project_id=None)
+
+    _cleanup()
+
+
+def test_list_hunting_sessions_by_project() -> None:
+    from app.api.v1.hunting import _get_repo
+
+    pid = uuid.uuid4()
+    mock_repo = AsyncMock()
+    mock_repo.list_hunting.return_value = [_mock_session(session_type=SessionType.TARGET_DISCOVERY)]
+    app.dependency_overrides[_get_repo] = lambda: mock_repo
+
+    client = TestClient(app, raise_server_exceptions=False)
+    resp = client.get(f"/api/v1/hunting/sessions?project_id={pid}")
+    assert resp.status_code == 200
+    assert len(resp.json()) == 1
+    mock_repo.list_hunting.assert_awaited_once_with(project_id=pid)
+
+    _cleanup()
+
+
 def _hunting_payload(**overrides):
     return {
         "project_id": str(overrides.get("project_id", uuid.uuid4())),
