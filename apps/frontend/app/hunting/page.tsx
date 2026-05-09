@@ -37,9 +37,11 @@ const STATE_VARIANT: Record<string, "default" | "secondary" | "destructive" | "o
 
 export default function HuntingPage() {
   const { data: projects } = useProjects();
-  const [selectedProjectId, setSelectedProjectId] = useState("");
-  const projectId = selectedProjectId || projects?.[0]?.id || "";
-  const { data: sessions, isLoading } = useHuntingSessions(projectId);
+  const [selectedProjectId, setSelectedProjectId] = useState<string>("__all__");
+  const projectFilter = selectedProjectId === "__all__" ? undefined : selectedProjectId;
+  const { data: sessions, isLoading } = useHuntingSessions(projectFilter);
+
+  const projectMap = new Map((projects ?? []).map((p) => [p.id, p.name]));
 
   const active = sessions?.filter(
     (s) => !["completed", "failed", "canceled"].includes(s.state),
@@ -58,11 +60,12 @@ export default function HuntingPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Select value={projectId} onValueChange={(v) => setSelectedProjectId(v ?? "")}>
+          <Select value={selectedProjectId} onValueChange={(v) => setSelectedProjectId(v ?? "__all__")}>
             <SelectTrigger className="w-48">
-              <SelectValue placeholder="프로젝트 선택" />
+              <SelectValue placeholder="전체 프로젝트" />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="__all__">전체 프로젝트</SelectItem>
               {(projects ?? []).map((p) => (
                 <SelectItem key={p.id} value={p.id}>
                   {p.name}
@@ -123,30 +126,32 @@ export default function HuntingPage() {
                 | Record<string, { status: "pending" | "running" | "done" | "failed" }>
                 | undefined;
               return (
-                <div key={s.id} className="space-y-2 rounded-lg border p-3">
-                  <div className="flex items-center justify-between">
-                    <Link
-                      href={`/sessions/${s.id}`}
-                      className="font-mono text-xs hover:underline"
-                    >
-                      {s.id.slice(0, 8)}
-                    </Link>
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline">
-                        {SESSION_TYPE_LABEL[s.session_type] ?? s.session_type}
-                      </Badge>
-                      <Badge variant={STATE_VARIANT[s.state] ?? "outline"}>
-                        {s.state}
-                      </Badge>
+                <Link key={s.id} href={`/sessions/${s.id}`} className="block">
+                  <div className="space-y-2 rounded-lg border p-3 transition-colors hover:bg-accent/50">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-xs">{s.id.slice(0, 8)}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {projectMap.get(s.project_id) ?? s.project_id.slice(0, 8)}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline">
+                          {SESSION_TYPE_LABEL[s.session_type] ?? s.session_type}
+                        </Badge>
+                        <Badge variant={STATE_VARIANT[s.state] ?? "outline"}>
+                          {s.state}
+                        </Badge>
+                      </div>
                     </div>
+                    <PhasePipeline
+                      phases={phases ?? {}}
+                      currentPhase={s.current_phase}
+                      phaseOrder={order}
+                      labels={labels}
+                    />
                   </div>
-                  <PhasePipeline
-                    phases={phases ?? {}}
-                    currentPhase={s.current_phase}
-                    phaseOrder={order}
-                    labels={labels}
-                  />
-                </div>
+                </Link>
               );
             })}
           </CardContent>
@@ -164,13 +169,14 @@ export default function HuntingPage() {
             <p className="text-muted-foreground text-sm">로딩 중...</p>
           ) : !sessions?.length ? (
             <p className="text-muted-foreground text-sm">
-              헌팅 세션이 없습니다.
+              헌팅 세션이 없습니다. 위의 &quot;새 헌팅 세션&quot; 버튼으로 시작하세요.
             </p>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>세션</TableHead>
+                  <TableHead>프로젝트</TableHead>
                   <TableHead>유형</TableHead>
                   <TableHead>상태</TableHead>
                   <TableHead>페이즈</TableHead>
@@ -180,13 +186,21 @@ export default function HuntingPage() {
               </TableHeader>
               <TableBody>
                 {sessions.map((s) => (
-                  <TableRow key={s.id}>
+                  <TableRow key={s.id} className="cursor-pointer">
                     <TableCell>
                       <Link
                         href={`/sessions/${s.id}`}
                         className="font-mono text-xs hover:underline"
                       >
                         {s.id.slice(0, 8)}
+                      </Link>
+                    </TableCell>
+                    <TableCell className="text-xs">
+                      <Link
+                        href={`/projects/${s.project_id}`}
+                        className="hover:underline"
+                      >
+                        {projectMap.get(s.project_id) ?? s.project_id.slice(0, 8)}
                       </Link>
                     </TableCell>
                     <TableCell>

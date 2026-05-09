@@ -91,6 +91,15 @@ async def _create_hunting_session(
     return SessionRead.model_validate(analysis)
 
 
+@router.get("/sessions", response_model=list[SessionRead])
+async def list_hunting_sessions(
+    project_id: uuid.UUID | None = None,
+    repo: SessionRepository = Depends(_get_repo),
+) -> list[SessionRead]:
+    sessions = await repo.list_hunting(project_id=project_id)
+    return [SessionRead.model_validate(s) for s in sessions]
+
+
 @router.post(
     "/target-discovery",
     response_model=SessionRead,

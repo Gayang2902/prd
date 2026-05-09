@@ -2,6 +2,11 @@ import { apiFetch } from "./client";
 import type { Session } from "./sessions";
 import type { Finding } from "./findings";
 
+export function fetchHuntingSessions(projectId?: string): Promise<Session[]> {
+  const params = projectId ? `?project_id=${projectId}` : "";
+  return apiFetch<Session[]>(`/hunting/sessions${params}`);
+}
+
 export interface HuntingSessionCreate {
   project_id: string;
   preset_id: string;

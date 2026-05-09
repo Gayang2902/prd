@@ -86,6 +86,21 @@ class SessionRepository:
         )
         return list(result.scalars().all())
 
+    async def list_hunting(
+        self, *, project_id: uuid.UUID | None = None
+    ) -> list[AnalysisSession]:
+        stmt = select(AnalysisSession).where(
+            AnalysisSession.session_type.in_([
+                SessionType.TARGET_DISCOVERY,
+                SessionType.ZERO_DAY_HUNTING,
+            ])
+        )
+        if project_id is not None:
+            stmt = stmt.where(AnalysisSession.project_id == project_id)
+        stmt = stmt.order_by(AnalysisSession.started_at.desc())
+        result = await self._session.execute(stmt)
+        return list(result.scalars().all())
+
     async def create(
         self,
         *,
