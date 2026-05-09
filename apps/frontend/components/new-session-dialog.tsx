@@ -46,17 +46,21 @@ export function NewSessionDialog({ projectId }: Props) {
 
   const handleSubmit = async () => {
     if (!branch) return;
-    await createSession.mutateAsync({
-      branch,
-      commit_sha: commitSha || null,
-      diff_base_sha: diffBaseSha || null,
-      preset_id: presetId || "00000000-0000-0000-0000-000000000001",
-      agent_id: agentId || "00000000-0000-0000-0000-000000000010",
-    });
-    setOpen(false);
-    setBranch("");
-    setCommitSha("");
-    setDiffBaseSha("");
+    try {
+      await createSession.mutateAsync({
+        branch,
+        commit_sha: commitSha || null,
+        diff_base_sha: diffBaseSha || null,
+        preset_id: presetId || "00000000-0000-0000-0000-000000000001",
+        agent_id: agentId || "00000000-0000-0000-0000-000000000010",
+      });
+      setOpen(false);
+      setBranch("");
+      setCommitSha("");
+      setDiffBaseSha("");
+    } catch {
+      // error is displayed via createSession.error
+    }
   };
 
   return (
@@ -159,6 +163,12 @@ export function NewSessionDialog({ projectId }: Props) {
               placeholder="src/api, src/auth (쉼표 구분)"
             />
           </div>
+
+          {createSession.error && (
+            <p className="text-xs text-[#ff5555]">
+              {createSession.error instanceof Error ? createSession.error.message : "요청 실패"}
+            </p>
+          )}
 
           <Button
             className="w-full"

@@ -89,6 +89,7 @@ export function NewHuntingDialog() {
   const presetList = presets ?? [];
   const projectList = projects ?? [];
   const isPending = createTarget.isPending || createZeroDay.isPending;
+  const mutationError = createTarget.error || createZeroDay.error;
 
   const selectedProjectName = projectList.find((p) => p.id === projectId)?.name;
   const selectedAgentName = agentList.find((a) => a.id === agentId)?.name;
@@ -142,14 +143,17 @@ export function NewHuntingDialog() {
       config,
     };
 
-    if (huntingType === "target_discovery") {
-      await createTarget.mutateAsync(payload);
-    } else {
-      await createZeroDay.mutateAsync(payload);
+    try {
+      if (huntingType === "target_discovery") {
+        await createTarget.mutateAsync(payload);
+      } else {
+        await createZeroDay.mutateAsync(payload);
+      }
+      setOpen(false);
+      reset();
+    } catch {
+      // mutationError is displayed in the UI
     }
-
-    setOpen(false);
-    reset();
   };
 
   return (
@@ -394,6 +398,12 @@ export function NewHuntingDialog() {
                   병렬 퍼징 → SAS 트리아지 → Opus 코드 리딩 → 병렬 Bypass → CCG 교차 검증
                 </p>
               </div>
+            )}
+
+            {mutationError && (
+              <p className="text-xs text-[#ff5555]">
+                {mutationError instanceof Error ? mutationError.message : "요청 실패"}
+              </p>
             )}
 
             <Button
