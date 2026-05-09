@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useCreateSession } from "@/lib/hooks/use-sessions";
 import { useAgents } from "@/lib/hooks/use-agents";
 import { usePresets } from "@/lib/hooks/use-presets";
@@ -27,6 +28,7 @@ interface Props {
 }
 
 export function NewSessionDialog({ projectId }: Props) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [branch, setBranch] = useState("");
   const [commitSha, setCommitSha] = useState("");
@@ -47,7 +49,7 @@ export function NewSessionDialog({ projectId }: Props) {
   const handleSubmit = async () => {
     if (!branch) return;
     try {
-      await createSession.mutateAsync({
+      const session = await createSession.mutateAsync({
         branch,
         commit_sha: commitSha || null,
         diff_base_sha: diffBaseSha || null,
@@ -58,6 +60,7 @@ export function NewSessionDialog({ projectId }: Props) {
       setBranch("");
       setCommitSha("");
       setDiffBaseSha("");
+      router.push(`/sessions/${session.id}`);
     } catch {
       // error is displayed via createSession.error
     }
