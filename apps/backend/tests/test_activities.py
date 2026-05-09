@@ -23,6 +23,7 @@ from securescope_schemas.agent_interface import (
 from app.models.analysis_session import SessionState
 from app.workflows.activities import (
     ResourceLimitExceededError,
+    accumulate_session_cost,
     cleanup_isolated_env,
     clone_repository,
     post_process_findings,
@@ -506,3 +507,53 @@ async def test_post_process_findings_empty(mock_activity: MagicMock) -> None:
         count = await post_process_findings(sid, result)
 
     assert count == 0
+
+
+# ── accumulate_session_cost ──
+
+
+@pytest.mark.asyncio
+@patch("app.workflows.activities.activity")
+@patch("app.workflows.activities._ws_broadcast", new_callable=AsyncMock)
+async def test_accumulate_session_cost(mock_broadcast: AsyncMock, mock_activity: MagicMock) -> None:
+    from decimal import Decimal
+
+    sid = uuid.uuid4()
+    mock_analysis = MagicMock()
+    mock_analysis.cost = Decimal("0.05")
+    mock_analysis.token_usage = 3
+
+    mock_db = AsyncMock()
+    mock_db.get = AsyncMock(return_value=mock_analysis)
+
+    @asynccontextmanager
+    async def fake_factory():
+        yield mock_db
+
+    with patch("app.core.database.async_session_factory", fake_factory):
+        await accumulate_session_cost(sid, 0.12, 5)
+
+    assert mock_analysis.cost == Decimal("0.05") + Decimal("0.12")
+    assert mock_analysis.token_usage == 8
+    mock_db.commit.assert_awaited_once()
+    mock_broadcast.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+@patch("app.workflows.activities.activity")
+@patch("app.workflows.activities._ws_broadcast", new_callable=AsyncMock)
+async def test_accumulate_session_cost_missing_session(
+    mock_broadcast: AsyncMock, mock_activity: MagicMock
+) -> None:
+    mock_db = AsyncMock()
+    mock_db.get = AsyncMock(return_value=None)
+
+    @asynccontextmanager
+    async def fake_factory():
+        yield mock_db
+
+    with patch("app.core.database.async_session_factory", fake_factory):
+        await accumulate_session_cost(uuid.uuid4(), 0.1, 2)
+
+    mock_db.commit.assert_not_awaited()
+    mock_broadcast.assert_not_awaited()
