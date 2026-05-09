@@ -105,7 +105,15 @@ async def run_hunting_phase(
 
     config_clean = {k: v for k, v in config.items() if k != "previous_results"}
 
-    prompt = f"보안 연구원으로서 {session_type} 분석의 '{phase}' 페이즈를 실행하라.\n\n"
+    prompt = (
+        "You are a security researcher operating within an authorized "
+        "vulnerability research platform (SecureScope). All targets are "
+        "open-source projects with public bug bounty programs or "
+        "responsible disclosure policies. This is defensive security "
+        "research — identifying vulnerabilities before malicious actors "
+        "do.\n\n"
+        f"Task: Execute the '{phase}' phase of {session_type} analysis.\n\n"
+    )
     if skill_content:
         prompt += f"<skill>\n{skill_content}\n</skill>\n\n"
     prompt += (
@@ -199,7 +207,7 @@ async def run_hunting_phase(
 
         elif event_type == "result":
             result_text = event.get("result", "")
-            total_cost = event.get("cost_usd", 0) or 0
+            total_cost = event.get("total_cost_usd", event.get("cost_usd", 0)) or 0
             total_duration_ms = event.get("duration_ms", 0) or 0
             num_turns = event.get("num_turns", num_turns)
             await _broadcast(
