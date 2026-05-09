@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   useCreateTargetDiscovery,
   useCreateZeroDayHunt,
@@ -63,6 +64,7 @@ function BugIcon({ className }: { className?: string }) {
 }
 
 export function NewHuntingDialog() {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<Step>("select");
   const [huntingType, setHuntingType] = useState<HuntingType>("target_discovery");
@@ -144,13 +146,15 @@ export function NewHuntingDialog() {
     };
 
     try {
+      let session;
       if (huntingType === "target_discovery") {
-        await createTarget.mutateAsync(payload);
+        session = await createTarget.mutateAsync(payload);
       } else {
-        await createZeroDay.mutateAsync(payload);
+        session = await createZeroDay.mutateAsync(payload);
       }
       setOpen(false);
       reset();
+      router.push(`/sessions/${session.id}`);
     } catch {
       // mutationError is displayed in the UI
     }
