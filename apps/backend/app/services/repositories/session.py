@@ -1,9 +1,12 @@
 import uuid
+from datetime import UTC, datetime
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.analysis_session import AnalysisSession, SessionPriority, SessionState, SessionType
+
+_TERMINAL_STATES = {SessionState.COMPLETED, SessionState.FAILED, SessionState.CANCELED}
 
 VALID_TRANSITIONS: dict[SessionState, set[SessionState]] = {
     SessionState.QUEUED: {SessionState.PREPARING, SessionState.CANCELED},
@@ -157,5 +160,7 @@ class SessionRepository:
                 f"Cannot transition from {analysis.state} to {new_state}"
             )
         analysis.state = new_state
+        if new_state in _TERMINAL_STATES:
+            analysis.completed_at = datetime.now(UTC)
         await self._session.flush()
         return analysis
