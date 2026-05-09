@@ -115,7 +115,16 @@ async def run_hunting_phase(
         f"{OUTPUT_SCHEMA}"
     )
 
-    cmd = [CLAUDE_CMD, "-p", prompt, "--output-format", "stream-json", "--verbose", "--max-turns", "30"]
+    cmd = [
+        CLAUDE_CMD,
+        "-p",
+        prompt,
+        "--output-format",
+        "stream-json",
+        "--verbose",
+        "--max-turns",
+        "30",
+    ]
     cwd = work_dir if os.path.isdir(work_dir) else None
 
     await _broadcast(
