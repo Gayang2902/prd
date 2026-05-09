@@ -6,7 +6,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from app.models.analysis_session import SessionPriority, SessionType
+from app.models.analysis_session import SessionPriority, SessionState, SessionType
 from app.models.finding_status import VerificationStatus
 from app.models.project import Priority, ProjectStatus
 from app.schemas.project import ProjectCreate, ProjectUpdate
@@ -379,3 +379,49 @@ async def test_session_update_phase_data_not_found() -> None:
 
     result = await repo.update_phase_data(uuid.uuid4(), "gathering", "running")
     assert result is None
+
+
+@pytest.mark.asyncio
+async def test_session_list_hunting_all() -> None:
+    db = AsyncMock()
+    db.execute = AsyncMock(return_value=_scalars_all(["h1", "h2", "h3"]))
+    repo = SessionRepository(db)
+
+    sessions = await repo.list_hunting()
+    assert len(sessions) == 3
+    db.execute.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_session_list_hunting_by_project() -> None:
+    db = AsyncMock()
+    db.execute = AsyncMock(return_value=_scalars_all(["h1"]))
+    repo = SessionRepository(db)
+
+    sessions = await repo.list_hunting(project_id=uuid.uuid4())
+    assert len(sessions) == 1
+
+
+@pytest.mark.asyncio
+async def test_session_transition_sets_completed_at() -> None:
+    db = _db()
+    repo = SessionRepository(db)
+    analysis = MagicMock()
+    analysis.state = SessionState.POST_PROCESSING
+    analysis.completed_at = None
+
+    await repo.transition(analysis, SessionState.COMPLETED)
+    assert analysis.state == SessionState.COMPLETED
+    assert analysis.completed_at is not None
+
+
+@pytest.mark.asyncio
+async def test_session_transition_idempotent() -> None:
+    db = _db()
+    repo = SessionRepository(db)
+    analysis = MagicMock()
+    analysis.state = SessionState.PREPARING
+
+    result = await repo.transition(analysis, SessionState.PREPARING)
+    assert result is analysis
+    db.flush.assert_not_awaited()
