@@ -429,7 +429,7 @@ export default function SessionDetailPage({
         </CardContent>
       </Card>
 
-      {isHuntingSession(session) && isActive && (
+      {isHuntingSession(session) && agentEvents.length > 0 && (
         <AgentActivityFeed events={agentEvents} />
       )}
 

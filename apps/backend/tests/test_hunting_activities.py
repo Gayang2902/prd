@@ -290,6 +290,7 @@ async def test_run_hunting_phase_stream_json_format():
     assert "--output-format" in cmd_args
     fmt_idx = list(cmd_args).index("--output-format")
     assert cmd_args[fmt_idx + 1] == "stream-json"
+    assert "--verbose" in cmd_args
 
 
 # ── _extract_tool_calls ──
