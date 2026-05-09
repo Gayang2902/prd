@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useState } from "react";
 import { useCreateSession } from "@/lib/hooks/use-sessions";
 import { useAgents } from "@/lib/hooks/use-agents";
 import { usePresets } from "@/lib/hooks/use-presets";
@@ -44,8 +44,8 @@ export function NewSessionDialog({ projectId }: Props) {
   const selectedAgentName = agentList.find((a) => a.id === agentId)?.name;
   const selectedPresetName = presetList.find((p) => p.id === presetId)?.name;
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
+    if (!branch) return;
     await createSession.mutateAsync({
       branch,
       commit_sha: commitSha || null,
@@ -68,7 +68,7 @@ export function NewSessionDialog({ projectId }: Props) {
         <DialogHeader>
           <DialogTitle>새 분석 실행</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="agent">에이전트</Label>
             <Select value={agentId} onValueChange={(v) => setAgentId(v ?? "")}>
@@ -161,13 +161,13 @@ export function NewSessionDialog({ projectId }: Props) {
           </div>
 
           <Button
-            type="submit"
             className="w-full"
-            disabled={createSession.isPending}
+            disabled={createSession.isPending || !branch}
+            onClick={handleSubmit}
           >
             {createSession.isPending ? "실행 중..." : "분석 시작"}
           </Button>
-        </form>
+        </div>
       </DialogContent>
     </Dialog>
   );

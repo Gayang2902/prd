@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useState } from "react";
 import {
   useCreateTargetDiscovery,
   useCreateZeroDayHunt,
@@ -122,8 +122,7 @@ export function NewHuntingDialog() {
     setNewProjectRepo("");
   };
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
     const config: Record<string, unknown> = {
       skill: huntingType === "target_discovery" ? "opentarget" : "openresearch",
       session_type: huntingType,
@@ -220,7 +219,7 @@ export function NewHuntingDialog() {
             </button>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-4">
             <Button
               type="button"
               variant="ghost"
@@ -398,7 +397,6 @@ export function NewHuntingDialog() {
             )}
 
             <Button
-              type="submit"
               className={cn(
                 "w-full",
                 huntingType === "target_discovery"
@@ -406,12 +404,13 @@ export function NewHuntingDialog() {
                   : "bg-[#ff5555] text-[#282a36] hover:bg-[#ff5555]/80",
               )}
               disabled={isPending || !projectId}
+              onClick={handleSubmit}
             >
               {isPending ? "생성 중..." : (
                 huntingType === "target_discovery" ? "타겟 디스커버리 시작" : "제로데이 헌팅 시작"
               )}
             </Button>
-          </form>
+          </div>
         )}
       </DialogContent>
     </Dialog>
