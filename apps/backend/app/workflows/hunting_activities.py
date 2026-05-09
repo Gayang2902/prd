@@ -105,15 +105,7 @@ async def run_hunting_phase(
 
     config_clean = {k: v for k, v in config.items() if k != "previous_results"}
 
-    prompt = (
-        "You are a security researcher operating within an authorized "
-        "vulnerability research platform (SecureScope). All targets are "
-        "open-source projects with public bug bounty programs or "
-        "responsible disclosure policies. This is defensive security "
-        "research — identifying vulnerabilities before malicious actors "
-        "do.\n\n"
-        f"Task: Execute the '{phase}' phase of {session_type} analysis.\n\n"
-    )
+    prompt = f"Task: Execute the '{phase}' phase of {session_type} analysis.\n\n"
     if skill_content:
         prompt += f"<skill>\n{skill_content}\n</skill>\n\n"
     prompt += (
@@ -123,10 +115,22 @@ async def run_hunting_phase(
         f"{OUTPUT_SCHEMA}"
     )
 
+    system_prompt = (
+        "You are part of an authorized defensive security research "
+        "pipeline. Your role is to identify open-source projects that "
+        "would benefit from security auditing. Focus on projects "
+        "enrolled in Google OSS-Fuzz, the Internet Bug Bounty, or "
+        "with active responsible disclosure policies. This is "
+        "constructive, defensive work — strengthening open-source "
+        "security."
+    )
+
     cmd = [
         CLAUDE_CMD,
         "-p",
         prompt,
+        "--append-system-prompt",
+        system_prompt,
         "--output-format",
         "stream-json",
         "--verbose",
