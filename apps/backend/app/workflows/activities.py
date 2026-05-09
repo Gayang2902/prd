@@ -191,7 +191,7 @@ async def post_process_hunting_findings(
     async with async_session_factory() as session:
         for af in result.findings:
             fp = compute_fingerprint(af.file_path, af.code_snippet, af.category)
-            extras: dict = {}
+            extras: dict[str, Any] = {}
             if session_type == SessionType.TARGET_DISCOVERY.value:
                 extras["crackability_score"] = getattr(af, "score", 0)
                 category = "target_candidate"

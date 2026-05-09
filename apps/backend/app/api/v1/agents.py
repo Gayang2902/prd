@@ -1,3 +1,5 @@
+from typing import Any
+
 from fastapi import APIRouter, Depends
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -9,7 +11,7 @@ router = APIRouter(tags=["agents"])
 
 
 @router.get("/agents")
-async def list_agents(db: AsyncSession = Depends(get_session)) -> list[dict]:
+async def list_agents(db: AsyncSession = Depends(get_session)) -> list[dict[str, Any]]:
     result = await db.execute(select(Agent))
     agents = result.scalars().all()
     return [

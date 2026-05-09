@@ -1,5 +1,6 @@
 import uuid
 from datetime import datetime
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -21,7 +22,7 @@ class FindingRead(BaseModel):
     title: str
     description: str
     regression_status: RegressionStatus
-    extras: dict | None = None
+    extras: dict[str, Any] | None = None
     created_at: datetime
 
 

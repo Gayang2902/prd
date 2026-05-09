@@ -1,5 +1,6 @@
 import asyncio
 from datetime import timedelta
+from typing import Any
 
 from temporalio import workflow
 from temporalio.common import RetryPolicy
@@ -65,7 +66,7 @@ class HuntingWorkflow:
         phases = _PHASES_BY_TYPE[ctx.session_type]
         config = ctx.analysis_context.preset.ruleset or {}
         env_handle: EnvHandle | None = None
-        phase_results: dict[str, dict] = {}
+        phase_results: dict[str, dict[str, Any]] = {}
 
         try:
             await workflow.execute_activity(
@@ -174,7 +175,7 @@ class HuntingWorkflow:
                     workflow.logger.error("Cleanup failed", exc_info=True)
 
 
-async def _save_hunting_results(ctx: HuntingContext, phase_results: dict) -> None:
+async def _save_hunting_results(ctx: HuntingContext, phase_results: dict[str, Any]) -> None:
     from app.workflows.hunting_activities import save_hunting_findings
 
     await workflow.execute_activity(

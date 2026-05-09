@@ -1,5 +1,6 @@
 import uuid
 from datetime import UTC, datetime
+from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -114,7 +115,7 @@ class SessionRepository:
         model_version: str,
         priority: SessionPriority = SessionPriority.NORMAL,
         session_type: SessionType = SessionType.STATIC_ANALYSIS,
-        phase_data: dict | None = None,
+        phase_data: dict[str, Any] | None = None,
     ) -> AnalysisSession:
         analysis = AnalysisSession(
             project_id=project_id,
@@ -135,7 +136,7 @@ class SessionRepository:
         session_id: uuid.UUID,
         phase: str,
         phase_status: str,
-        data: dict | None = None,
+        data: dict[str, Any] | None = None,
     ) -> AnalysisSession | None:
         analysis = await self.get(session_id)
         if analysis is None:

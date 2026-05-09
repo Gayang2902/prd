@@ -196,7 +196,8 @@ class HuntingAgent(BaseAgent):
                 system=system_prompt,
                 messages=[{"role": "user", "content": user_prompt}],
             )
-            all_text = response.content[0].text if response.content else ""
+            block = response.content[0] if response.content else None
+            all_text = block.text if block and hasattr(block, "text") else ""
             total_tokens = response.usage.input_tokens + response.usage.output_tokens
         except Exception as e:
             logger.error("anthropic_api_error", error=str(e))
@@ -220,7 +221,7 @@ class HuntingAgent(BaseAgent):
     async def terminate(self) -> None:
         self._client = None
 
-    def _build_user_prompt(self, session_type: str, phase: str, config: dict) -> str:
+    def _build_user_prompt(self, session_type: str, phase: str, config: dict[str, Any]) -> str:
         config_clean = {
             k: v
             for k, v in config.items()
@@ -298,7 +299,7 @@ def _parse_findings(text: str) -> list[AgentFinding]:
                 title=str(raw.get("title", ""))[:200],
                 description=str(raw.get("description", ""))[:2000],
                 code_snippet=str(raw.get("code_snippet", ""))[:1000],
-                confidence=float(raw.get("confidence", raw.get("score", 0.7))),
+                confidence=float(raw.get("confidence") or raw.get("score") or 0.7),
                 metadata=raw.get("extras", {}),
             )
         )

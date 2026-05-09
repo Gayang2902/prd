@@ -3,6 +3,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+from typing import Any
 from uuid import UUID
 
 import structlog
@@ -52,10 +53,10 @@ async def run_hunting_phase(
     session_id: UUID,
     session_type: str,
     phase: str,
-    config: dict,
+    config: dict[str, Any],
     work_dir: str,
     agent_id: str | None = None,
-) -> dict:
+) -> dict[str, Any]:
     skill_name = SKILL_BY_TYPE.get(session_type, "opentarget")
     skill_path = SKILLS_DIR / skill_name / "SKILL.md"
     skill_content = skill_path.read_text() if skill_path.exists() else ""
@@ -113,7 +114,8 @@ async def run_hunting_phase(
         result_text = stdout_text
 
     try:
-        return json.loads(result_text)
+        parsed: dict[str, Any] = json.loads(result_text)
+        return parsed
     except (json.JSONDecodeError, TypeError):
         return {"phase": phase, "status": "done", "raw": result_text[:10000]}
 
@@ -126,7 +128,7 @@ def _fingerprint(text: str) -> str:
 async def save_hunting_findings(
     session_id: UUID,
     session_type: str,
-    phase_results: dict,
+    phase_results: dict[str, Any],
 ) -> int:
     from app.core.database import async_session_factory
     from app.models.analysis_session import AnalysisSession

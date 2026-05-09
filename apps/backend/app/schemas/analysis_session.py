@@ -1,6 +1,7 @@
 import uuid
 from datetime import datetime
 from decimal import Decimal
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -31,7 +32,7 @@ class SessionRead(BaseModel):
     state: SessionState
     priority: SessionPriority
     current_phase: str | None
-    phase_data: dict | None
+    phase_data: dict[str, Any] | None
     started_at: datetime
     completed_at: datetime | None
     token_usage: int
