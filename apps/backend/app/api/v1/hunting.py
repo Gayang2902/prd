@@ -13,11 +13,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.auth import Role, require_role
 from app.core.database import get_session
 from app.core.temporal import get_temporal_client
+from app.models.agent import Agent
 from app.models.analysis_session import SessionType
 from app.schemas.analysis_session import SessionRead
 from app.schemas.finding import FindingRead
 from app.schemas.hunting import HuntingSessionCreate, PhaseUpdate
-from app.services.agent_registry import get_registry
 from app.services.repositories.finding import FindingRepository
 from app.services.repositories.session import SessionRepository
 from app.workflows.models import HuntingContext
@@ -39,24 +39,17 @@ async def _create_hunting_session(
     repo: SessionRepository,
     db: AsyncSession,
 ) -> SessionRead:
-    registry = get_registry()
-    agent_cls = None
-    for cls in registry.values():
-        meta = cls.describe()
-        if meta.name:
-            agent_cls = cls
-            break
-    if agent_cls is None:
-        raise HTTPException(status_code=400, detail="No agents available")
+    agent = await db.get(Agent, payload.agent_id)
+    if agent is None:
+        raise HTTPException(status_code=400, detail="Agent not found")
 
-    meta = agent_cls.describe()
     initial_phase_data = {"config": payload.config, "phases": {}}
     analysis = await repo.create(
         project_id=payload.project_id,
         commit_sha=payload.commit_sha or "HEAD",
         agent_id=payload.agent_id,
         preset_id=payload.preset_id,
-        model_version=f"{meta.name}-{meta.version}",
+        model_version=f"{agent.name}-{agent.version}",
         priority=payload.priority,
         session_type=session_type,
         phase_data=initial_phase_data,

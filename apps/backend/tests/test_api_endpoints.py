@@ -987,17 +987,15 @@ def test_create_target_discovery() -> None:
     mock_db, _ = _setup_overrides()
     mock_db.commit = AsyncMock()
 
-    fake_meta = MagicMock()
-    fake_meta.name = "hunting-agent"
-    fake_meta.version = "1.0.0"
     fake_agent = MagicMock()
-    fake_agent.describe.return_value = fake_meta
+    fake_agent.name = "hunting-agent"
+    fake_agent.version = "1.0.0"
+    mock_db.get = AsyncMock(return_value=fake_agent)
 
     mock_temporal = AsyncMock()
     mock_temporal.start_workflow = AsyncMock()
 
-    with patch("app.api.v1.hunting.get_registry", return_value={"hunting": fake_agent}), \
-         patch("app.api.v1.hunting.get_temporal_client", return_value=mock_temporal):
+    with patch("app.api.v1.hunting.get_temporal_client", return_value=mock_temporal):
         client = TestClient(app, raise_server_exceptions=False)
         resp = client.post(
             "/api/v1/hunting/target-discovery",
@@ -1021,17 +1019,15 @@ def test_create_zero_day_hunt() -> None:
     mock_db, _ = _setup_overrides()
     mock_db.commit = AsyncMock()
 
-    fake_meta = MagicMock()
-    fake_meta.name = "hunting-agent"
-    fake_meta.version = "1.0.0"
     fake_agent = MagicMock()
-    fake_agent.describe.return_value = fake_meta
+    fake_agent.name = "hunting-agent"
+    fake_agent.version = "1.0.0"
+    mock_db.get = AsyncMock(return_value=fake_agent)
 
     mock_temporal = AsyncMock()
     mock_temporal.start_workflow = AsyncMock()
 
-    with patch("app.api.v1.hunting.get_registry", return_value={"hunting": fake_agent}), \
-         patch("app.api.v1.hunting.get_temporal_client", return_value=mock_temporal):
+    with patch("app.api.v1.hunting.get_temporal_client", return_value=mock_temporal):
         client = TestClient(app, raise_server_exceptions=False)
         resp = client.post(
             "/api/v1/hunting/zero-day",
@@ -1043,24 +1039,22 @@ def test_create_zero_day_hunt() -> None:
     _cleanup()
 
 
-def test_create_hunting_no_agents() -> None:
-    from unittest.mock import patch
-
+def test_create_hunting_agent_not_found() -> None:
     from app.api.v1.hunting import _get_repo
 
     mock_repo = AsyncMock()
     app.dependency_overrides[_get_repo] = lambda: mock_repo
-    _setup_overrides()
+    mock_db, _ = _setup_overrides()
+    mock_db.get = AsyncMock(return_value=None)
 
-    with patch("app.api.v1.hunting.get_registry", return_value={}):
-        client = TestClient(app, raise_server_exceptions=False)
-        resp = client.post(
-            "/api/v1/hunting/target-discovery",
-            json=_hunting_payload(),
-        )
-        assert resp.status_code == 400
-        body = resp.json()
-        assert "No agents" in body.get("detail", body.get("title", ""))
+    client = TestClient(app, raise_server_exceptions=False)
+    resp = client.post(
+        "/api/v1/hunting/target-discovery",
+        json=_hunting_payload(),
+    )
+    assert resp.status_code == 400
+    body = resp.json()
+    assert "Agent not found" in body.get("detail", body.get("title", ""))
 
     _cleanup()
 
