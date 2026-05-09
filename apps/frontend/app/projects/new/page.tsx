@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, type FormEvent } from "react";
+import { useState } from "react";
 import { useCreateProject } from "@/lib/hooks/use-projects";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,8 +23,8 @@ export default function NewProjectPage() {
   const [priority, setPriority] = useState("normal");
   const [deadline, setDeadline] = useState("");
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
+    if (!name || !gitlabId) return;
     await createProject.mutateAsync({
       name,
       gitlab_project_id: gitlabId,
@@ -41,14 +41,13 @@ export default function NewProjectPage() {
           <CardTitle>새 프로젝트 등록</CardTitle>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="name">프로젝트 이름</Label>
               <Input
                 id="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                required
               />
             </div>
             <div className="space-y-2">
@@ -58,7 +57,6 @@ export default function NewProjectPage() {
                 value={gitlabId}
                 onChange={(e) => setGitlabId(e.target.value)}
                 placeholder="group/project-name"
-                required
               />
             </div>
             <div className="space-y-2">
@@ -88,18 +86,17 @@ export default function NewProjectPage() {
               />
             </div>
             <div className="flex gap-2">
-              <Button type="submit" disabled={createProject.isPending}>
+              <Button disabled={createProject.isPending || !name || !gitlabId} onClick={handleSubmit}>
                 {createProject.isPending ? "등록 중..." : "등록"}
               </Button>
               <Button
-                type="button"
                 variant="outline"
                 onClick={() => router.back()}
               >
                 취소
               </Button>
             </div>
-          </form>
+          </div>
         </CardContent>
       </Card>
     </div>

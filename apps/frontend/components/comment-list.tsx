@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useState } from "react";
 import { useComments, useCreateComment } from "@/lib/hooks/use-comments";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,8 +16,7 @@ export function CommentList({ findingId }: Props) {
 
   if (!findingId) return null;
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
     if (!content.trim()) return;
     await createComment.mutateAsync(content.trim());
     setContent("");
@@ -49,7 +48,7 @@ export function CommentList({ findingId }: Props) {
         )}
       </div>
 
-      <form onSubmit={handleSubmit} className="flex gap-2">
+      <div className="flex gap-2">
         <Input
           value={content}
           onChange={(e) => setContent(e.target.value)}
@@ -57,13 +56,13 @@ export function CommentList({ findingId }: Props) {
           className="text-sm"
         />
         <Button
-          type="submit"
           size="sm"
           disabled={createComment.isPending || !content.trim()}
+          onClick={handleSubmit}
         >
           등록
         </Button>
-      </form>
+      </div>
     </div>
   );
 }
