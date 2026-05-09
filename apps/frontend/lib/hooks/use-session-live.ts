@@ -33,7 +33,11 @@ export function useSessionLive(sessionId: string) {
     ws.onmessage = (e) => {
       const event = JSON.parse(e.data);
 
-      if (event.type === "phase_updated" || event.type === "state_changed") {
+      if (
+        event.type === "phase_updated" ||
+        event.type === "state_changed" ||
+        event.type === "cost_updated"
+      ) {
         qc.invalidateQueries({ queryKey: ["session", sessionId] });
         qc.invalidateQueries({ queryKey: ["target-candidates", sessionId] });
         qc.invalidateQueries({ queryKey: ["findings", sessionId] });

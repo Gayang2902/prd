@@ -261,3 +261,22 @@ async def record_session_state(session_id: UUID, state: str) -> None:
     )
 
     activity.logger.info("Session state updated", extra={"state": actual_state.value})
+
+
+@activity.defn(name="accumulate_session_cost")
+async def accumulate_session_cost(session_id: UUID, cost_usd: float, num_turns: int) -> None:
+    from app.core.database import async_session_factory
+    from app.models.analysis_session import AnalysisSession
+
+    async with async_session_factory() as session:
+        analysis = await session.get(AnalysisSession, session_id)
+        if analysis is None:
+            return
+        analysis.cost = (analysis.cost or Decimal("0")) + Decimal(str(cost_usd))
+        analysis.token_usage = (analysis.token_usage or 0) + num_turns
+        await session.commit()
+
+    await _ws_broadcast(
+        session_id,
+        {"type": "cost_updated", "cost": float(analysis.cost), "token_usage": analysis.token_usage},
+    )

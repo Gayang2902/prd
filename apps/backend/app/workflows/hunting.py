@@ -8,6 +8,7 @@ from temporalio.common import RetryPolicy
 with workflow.unsafe.imports_passed_through():
     from app.models.analysis_session import SessionState, SessionType
     from app.workflows.activities import (
+        accumulate_session_cost,
         cleanup_isolated_env,
         clone_repository,
         provision_isolated_env,
@@ -130,6 +131,18 @@ class HuntingWorkflow:
                     args=[ctx.session_id, phase, status],
                     start_to_close_timeout=short,
                 )
+
+                trace = result.get("_trace", {}) if isinstance(result, dict) else {}
+                if trace.get("cost_usd", 0) > 0 or trace.get("num_turns", 0) > 0:
+                    await workflow.execute_activity(
+                        accumulate_session_cost,
+                        args=[
+                            ctx.session_id,
+                            trace.get("cost_usd", 0),
+                            trace.get("num_turns", 0),
+                        ],
+                        start_to_close_timeout=short,
+                    )
 
             await workflow.execute_activity(
                 record_session_state,

@@ -335,10 +335,33 @@ export default function SessionDetailPage({
       </div>
 
       <div className="grid grid-cols-4 gap-4">
-        <StatCard title="커밋" value={session.commit_sha.slice(0, 7)} />
-        <StatCard title="모델" value={session.model_version} />
-        <StatCard title="토큰" value={session.token_usage.toLocaleString()} />
-        <StatCard title="비용" value={`$${session.cost}`} />
+        {isHuntingSession(session) ? (
+          <>
+            <StatCard
+              title="현재 페이즈"
+              value={
+                session.current_phase
+                  ? (getPhaseConfig(session).labels[session.current_phase] ?? session.current_phase)
+                  : "-"
+              }
+            />
+            <StatCard
+              title="소요 시간"
+              value={
+                session.started_at
+                  ? `${((Date.now() - new Date(session.started_at).getTime()) / 1000 / 60).toFixed(1)}분`
+                  : "-"
+              }
+            />
+          </>
+        ) : (
+          <>
+            <StatCard title="커밋" value={session.commit_sha.slice(0, 7)} />
+            <StatCard title="모델" value={session.model_version} />
+          </>
+        )}
+        <StatCard title="턴" value={session.token_usage.toLocaleString()} />
+        <StatCard title="비용" value={`$${Number(session.cost).toFixed(4)}`} />
       </div>
 
       {isHuntingSession(session) && (
