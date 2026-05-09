@@ -1,15 +1,33 @@
+import json
 import time
 from decimal import Decimal
+from typing import Any
 from uuid import UUID
 
+import redis.asyncio as aioredis
 import structlog
 from securescope_schemas.agent_interface import AnalysisContext, AnalysisResult, CodeScope, LogEvent
 from temporalio import activity
 
+from app.core.config import settings
 from app.models.analysis_session import SessionState
 from app.workflows.models import EnvHandle
 
 logger = structlog.get_logger()
+
+_redis: aioredis.Redis | None = None
+
+
+async def _ws_broadcast(session_id: UUID, event: dict[str, Any]) -> None:
+    global _redis  # noqa: PLW0603
+    try:
+        if _redis is None:
+            _redis = aioredis.from_url(settings.redis_url, decode_responses=True)
+        channel = f"ws:session:{session_id}"
+        payload = json.dumps({"event": event, "exclude_id": None}, ensure_ascii=False)
+        await _redis.publish(channel, payload)
+    except Exception:
+        logger.warning("ws_broadcast_failed", session_id=str(session_id))
 
 
 @activity.defn(name="provision_isolated_env")
@@ -147,6 +165,12 @@ async def record_hunting_phase(
         await repo.update_phase_data(session_id, phase, phase_status)
         await session.commit()
 
+    await _ws_broadcast(session_id, {
+        "type": "phase_updated",
+        "phase": phase,
+        "status": phase_status,
+    })
+
     activity.logger.info(
         "Phase updated",
         extra={"phase": phase, "status": phase_status},
@@ -224,5 +248,10 @@ async def record_session_state(session_id: UUID, state: SessionState) -> None:
             raise RuntimeError(f"Session {session_id} not found")
         await repo.transition(analysis, state)
         await session.commit()
+
+    await _ws_broadcast(session_id, {
+        "type": "state_changed",
+        "state": state.value,
+    })
 
     activity.logger.info("Session state updated", extra={"state": state.value})

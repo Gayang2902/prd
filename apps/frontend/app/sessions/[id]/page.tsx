@@ -5,6 +5,7 @@ import { use } from "react";
 import { useSession } from "@/lib/hooks/use-sessions";
 import { useFindings } from "@/lib/hooks/use-findings";
 import { useTargetCandidates } from "@/lib/hooks/use-hunting";
+import { useSessionLive } from "@/lib/hooks/use-session-live";
 import { getLogsUrl } from "@/lib/api/sessions";
 import type { Session } from "@/lib/api/sessions";
 import { Badge } from "@/components/ui/badge";
@@ -130,6 +131,7 @@ export default function SessionDetailPage({
 }) {
   const { id } = use(params);
   const { data: session, isLoading, error } = useSession(id);
+  useSessionLive(id);
 
   if (isLoading) {
     return (
