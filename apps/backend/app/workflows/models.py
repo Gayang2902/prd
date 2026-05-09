@@ -13,5 +13,6 @@ class EnvHandle(BaseModel):
 class HuntingContext(BaseModel):
     session_id: UUID
     session_type: str
+    agent_id: UUID | None = None
     scope: CodeScope
     analysis_context: AnalysisContext

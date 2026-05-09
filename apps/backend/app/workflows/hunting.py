@@ -111,6 +111,7 @@ class HuntingWorkflow:
                         phase,
                         phase_config,
                         env_handle.work_dir,
+                        str(ctx.agent_id) if ctx.agent_id else None,
                     ],
                     start_to_close_timeout=timedelta(seconds=timeout_sec),
                     heartbeat_timeout=timedelta(seconds=120),

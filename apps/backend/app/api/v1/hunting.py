@@ -66,6 +66,7 @@ async def _create_hunting_session(
     hunting_ctx = HuntingContext(
         session_id=analysis.id,
         session_type=session_type.value,
+        agent_id=payload.agent_id,
         scope=CodeScope(
             repo_path=str(analysis.project_id),
             commit_sha=analysis.commit_sha,

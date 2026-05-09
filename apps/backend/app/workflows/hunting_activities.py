@@ -1,3 +1,4 @@
+import asyncio
 import hashlib
 import json
 import os
@@ -9,10 +10,14 @@ import structlog
 from anthropic import AsyncAnthropic
 from temporalio import activity
 
+from app.core.config import settings
+
 logger = structlog.get_logger()
 
 SKILLS_DIR = Path(os.environ.get("SKILLS_DIR", str(Path.home() / ".claude" / "skills")))
 MODEL = os.environ.get("HUNTING_MODEL", "claude-sonnet-4-20250514")
+CLAUDE_CMD = os.environ.get("CLAUDE_CMD", settings.claude_cmd)
+CLAUDE_CODE_AGENT_ID = "00000000-0000-0000-0000-000000000012"
 MAX_TOKENS = 16384
 
 SKILL_BY_TYPE: dict[str, str] = {
@@ -46,6 +51,19 @@ OUTPUT_SCHEMA = (
 
 @activity.defn(name="run_hunting_phase")
 async def run_hunting_phase(
+    session_id: UUID,
+    session_type: str,
+    phase: str,
+    config: dict,
+    work_dir: str,
+    agent_id: str | None = None,
+) -> dict:
+    if agent_id == CLAUDE_CODE_AGENT_ID:
+        return await _run_via_claude_code(session_id, session_type, phase, config, work_dir)
+    return await _run_via_api(session_id, session_type, phase, config, work_dir)
+
+
+async def _run_via_api(
     session_id: UUID,
     session_type: str,
     phase: str,
@@ -89,6 +107,66 @@ async def run_hunting_phase(
         return result
     except json.JSONDecodeError:
         return {"phase": phase, "status": "done", "raw": text[:10000]}
+
+
+async def _run_via_claude_code(
+    session_id: UUID,
+    session_type: str,
+    phase: str,
+    config: dict,
+    work_dir: str,
+) -> dict:
+    phase_instruction = PHASE_PROMPTS.get(session_type, {}).get(phase, f"Phase '{phase}' 실행.")
+
+    previous = config.get("previous_results", {})
+    prev_str = ""
+    if previous:
+        prev_str = f"\n\n이전 페이즈 결과:\n{json.dumps(previous, ensure_ascii=False, default=str)[:8000]}"
+
+    config_clean = {k: v for k, v in config.items() if k != "previous_results"}
+
+    prompt = (
+        f"보안 연구원으로서 {session_type} 분석의 '{phase}' 페이즈를 실행하라.\n\n"
+        f"{phase_instruction}\n\n"
+        f"설정: {json.dumps(config_clean, ensure_ascii=False) if config_clean else '{}'}"
+        f"{prev_str}\n\n"
+        f"{OUTPUT_SCHEMA}"
+    )
+
+    cmd = [CLAUDE_CMD, "-p", prompt, "--output-format", "json", "--max-turns", "30"]
+    cwd = work_dir if os.path.isdir(work_dir) else None
+
+    activity.logger.info("Running hunting phase via Claude Code CLI", extra={"phase": phase})
+
+    try:
+        proc = await asyncio.create_subprocess_exec(
+            *cmd,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+            cwd=cwd,
+        )
+        stdout_bytes, stderr_bytes = await proc.communicate()
+    except FileNotFoundError:
+        activity.logger.error("Claude Code CLI not found")
+        return {"phase": phase, "status": "failed", "error": "claude command not found"}
+
+    if proc.returncode != 0:
+        err = stderr_bytes.decode(errors="replace")[:2000]
+        activity.logger.error("Claude Code CLI failed", extra={"phase": phase, "returncode": proc.returncode})
+        return {"phase": phase, "status": "failed", "error": err}
+
+    stdout_text = stdout_bytes.decode(errors="replace")
+    try:
+        claude_output = json.loads(stdout_text)
+        result_text = claude_output.get("result", stdout_text)
+    except (json.JSONDecodeError, TypeError):
+        result_text = stdout_text
+
+    try:
+        result = json.loads(result_text)
+        return result
+    except (json.JSONDecodeError, TypeError):
+        return {"phase": phase, "status": "done", "raw": result_text[:10000]}
 
 
 def _fingerprint(text: str) -> str:

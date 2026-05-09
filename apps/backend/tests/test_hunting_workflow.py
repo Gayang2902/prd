@@ -61,7 +61,7 @@ def _make_hunting_activities(recorded_states, recorded_phases):
         pass
 
     @activity.defn(name="run_hunting_phase")
-    async def mock_run_phase(sid, stype, phase, config, work_dir):
+    async def mock_run_phase(sid, stype, phase, config, work_dir, agent_id=None):
         return {"phase": phase, "status": "done", "results": [{"name": f"target-{phase}"}]}
 
     @activity.defn(name="save_hunting_findings")
